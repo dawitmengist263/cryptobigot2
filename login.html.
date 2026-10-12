@@ -54,14 +54,10 @@ document.getElementById("loginForm").addEventListener("submit", function(e) {
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
 
-  if (username === "demo" && password === "demo123") {
-    window.location.href = "index.html";
-  } else {
-    document.getElementById("message").textContent =
-      "Incorrect demo login. Try the test details below.";
-  }
-});
-if (username === "demo" && password === "demo123") {
+ if (username === "demo" && password === "demo123") {
   sessionStorage.setItem("cryptobigot_demo_login", "yes");
   window.location.href = "index.html";
+  }
+});
+
 }
