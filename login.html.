@@ -64,4 +64,6 @@ document.getElementById("loginForm").addEventListener("submit", function(e) {
 </script>
 </body>
 </html>
-
+if (username === "demo" && password === "demo123") {
+  window.location.href = "index.html";
+}
