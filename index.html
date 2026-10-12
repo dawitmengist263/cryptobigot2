@@ -1,1 +1,146 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CryptoBigot | Trading Demo</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:#eef2ff;font-family:Arial,sans-serif}
+header{padding:22px 7%;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #273047}
+.logo{font-size:24px;font-weight:bold;color:#67e8b5}
+.tag{color:#facc15;font-size:12px}
+main{max-width:1100px;margin:35px auto;padding:0 20px}
+h1{font-size:32px}
+.muted{color:#9aa7c2}
+.notice{background:#302813;border:1px solid #6b5420;color:#ffe5a0;padding:13px;border-radius:10px;margin:20px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.card{background:#141c30;border:1px solid #27334c;border-radius:15px;padding:22px;margin-bottom:18px}
+.label{color:#9aa7c2;font-size:14px}
+.price{font-size:27px;font-weight:bold;margin-top:12px}
+.green{color:#67e8b5}
+.red{color:#fb7185}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:18px}
+input{width:100%;padding:13px;margin:12px 0;background:#0b1020;color:white;border:1px solid #38445f;border-radius:8px;font-size:16px}
+button{border:0;border-radius:8px;padding:13px 18px;font-weight:bold;cursor:pointer;width:100%;font-size:15px}
+.buy{background:#67e8b5;color:#08150f}
+.sell{background:#fb7185;color:#260910}
+table{width:100%;border-collapse:collapse}
+td,th{text-align:left;padding:13px 8px;border-bottom:1px solid #273047}
+footer{text-align:center;padding:30px;color:#9aa7c2;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">₿ CryptoBigot</div>
+  <div class="tag">DEMO MODE · NO REAL MONEY</div>
+</header>
+<main>
+  <h1>Your crypto dashboard</h1>
+  <p class="muted">Explore a simulated cryptocurrency trading platform.</p>
+  <div class="notice">⚠️ Practice only. Prices and balances are examples, not live market data. No real transactions occur.</div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="label">Demo portfolio value</div>
+      <div class="price" id="portfolio">$10,000.00</div>
+    </div>
+    <div class="card">
+      <div class="label">Bitcoin (BTC) demo price</div>
+      <div class="price">$67,000.00</div>
+      <div class="green">Example price only</div>
+    </div>
+    <div class="card">
+      <div class="label">Your demo cash</div>
+      <div class="price" id="cash">$5,000.00</div>
+    </div>
+    <div class="card">
+      <div class="label">Your demo Bitcoin</div>
+      <div class="price" id="btc">0.07462687 BTC</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="card">
+      <h2>Buy Bitcoin</h2>
+      <p class="muted">Use your fictional demo cash.</p>
+      <label for="buyAmount">Amount in USD</label>
+      <input id="buyAmount" type="number" min="1" step="1" placeholder="Example: 100">
+      <button class="buy" onclick="trade('buy')">Buy BTC (Demo)</button>
+    </div>
+    <div class="card">
+      <h2>Sell Bitcoin</h2>
+      <p class="muted">Sell your fictional demo Bitcoin.</p>
+      <label for="sellAmount">Amount in USD</label>
+      <input id="sellAmount" type="number" min="1" step="1" placeholder="Example: 100">
+      <button class="sell" onclick="trade('sell')">Sell BTC (Demo)</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Markets</h2>
+    <table>
+      <thead><tr><th>Asset</th><th>Symbol</th><th>Example price</th></tr></thead>
+      <tbody>
+        <tr><td>₿ Bitcoin</td><td>BTC</td><td>$67,000.00</td></tr>
+        <tr><td>◆ Ethereum</td><td>ETH</td><td>$3,200.00</td></tr>
+        <tr><td>◎ Solana</td><td>SOL</td><td>$150.00</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p id="message" class="muted" role="status">Ready to practice? Try a demo trade above.</p>
+</main>
+<footer>CryptoBigot Demo · Educational use only · No deposits or withdrawals</footer>
+
+<script>
+const price = 67000;
+let cash = 5000;
+let btc = 5000 / price;
+
+function money(n) {
+  return n.toLocaleString("en-US", {
+    style: "currency", currency: "USD"
+  });
+}
+function update() {
+  document.getElementById("cash").textContent = money(cash);
+  document.getElementById("btc").textContent = btc.toFixed(8) + " BTC";
+  document.getElementById("portfolio").textContent = money(cash + btc * price);
+}
+function trade(type) {
+  const field = document.getElementById(
+    type === "buy" ? "buyAmount" : "sellAmount"
+  );
+  const amount = Number(field.value);
+  const message = document.getElementById("message");
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    message.textContent = "Enter a valid amount greater than zero.";
+    return;
+  }
+  if (type === "buy") {
+    if (amount > cash) {
+      message.textContent = "Not enough demo cash for this trade.";
+      return;
+    }
+    cash -= amount;
+    btc += amount / price;
+    message.textContent = "Demo purchase complete. No real Bitcoin was bought.";
+  } else {
+    if (amount > btc * price) {
+      message.textContent = "Not enough demo Bitcoin for this sale.";
+      return;
+    }
+    btc -= amount / price;
+    cash += amount;
+    message.textContent = "Demo sale complete. No real Bitcoin was sold.";
+  }
+  field.value = "";
+  update();
+}
+update();
+</script>
+</body>
+</html>
+
