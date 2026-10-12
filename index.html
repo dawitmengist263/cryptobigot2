@@ -1,148 +1,407 @@
 
-<script>
-if (sessionStorage.getItem("cryptobigot_demo_login") !== "yes") {
-  window.location.replace("login.html");
-}
-</script>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CryptoBigot | Trading Demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#090a10">
+<title>CryptoBigot | Demo Exchange</title>
+
 <style>
+:root{
+  --bg:#090a10;--panel:#111522;--panel2:#171d30;
+  --border:#292f43;--text:#f5f7ff;--muted:#959db1;
+  --blue:#3266f5;--purple:#9637ed;--green:#20c997;--red:#f34c62;
+}
 *{box-sizing:border-box}
-body{margin:0;background:#0b1020;color:#eef2ff;font-family:Arial,sans-serif}
-header{padding:22px 7%;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #273047}
-.logo{font-size:24px;font-weight:bold;color:#67e8b5}
-.tag{color:#facc15;font-size:12px}
-main{max-width:1100px;margin:35px auto;padding:0 20px}
-h1{font-size:32px}
-.muted{color:#9aa7c2}
-.notice{background:#302813;border:1px solid #6b5420;color:#ffe5a0;padding:13px;border-radius:10px;margin:20px 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
-.card{background:#141c30;border:1px solid #27334c;border-radius:15px;padding:22px;margin-bottom:18px}
-.label{color:#9aa7c2;font-size:14px}
-.price{font-size:27px;font-weight:bold;margin-top:12px}
-.green{color:#67e8b5}
-.red{color:#fb7185}
-.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:18px}
-input{width:100%;padding:13px;margin:12px 0;background:#0b1020;color:white;border:1px solid #38445f;border-radius:8px;font-size:16px}
-button{border:0;border-radius:8px;padding:13px 18px;font-weight:bold;cursor:pointer;width:100%;font-size:15px}
-.buy{background:#67e8b5;color:#08150f}
-.sell{background:#fb7185;color:#260910}
-table{width:100%;border-collapse:collapse}
-td,th{text-align:left;padding:13px 8px;border-bottom:1px solid #273047}
-footer{text-align:center;padding:30px;color:#9aa7c2;font-size:13px}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+header{
+ position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;
+ align-items:center;padding:14px 18px;background:#0c0d14;
+ border-bottom:1px solid var(--border)
+}
+.brand{display:flex;align-items:center;gap:11px;font-weight:bold;font-size:17px}
+.logo{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
+ background:linear-gradient(135deg,var(--purple),var(--blue));font-size:22px}
+.brand small{display:block;font-size:9px;letter-spacing:1.5px;color:var(--muted);margin-top:4px}
+.headbtn{background:var(--panel);border:1px solid var(--border);color:white;
+ padding:10px;border-radius:11px;margin-left:4px}
+main{max-width:1050px;margin:auto;padding:20px 14px 105px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:17px;
+ padding:16px;margin-bottom:17px}
+.muted{color:var(--muted)}
+.small{font-size:12px;line-height:1.7}
+.pair{display:flex;align-items:center;justify-content:space-between;width:100%;
+ background:var(--panel2);color:white;border:1px solid var(--border);
+ border-radius:12px;padding:13px;font-weight:bold}
+.coin{display:inline-grid;place-items:center;width:32px;height:32px;
+ border-radius:50%;background:#f7931a;color:white;margin-right:9px}
+.coin.xrp{background:#313647}
+.tools{display:flex;gap:5px;flex-wrap:wrap;margin:15px 0}
+.tools button{padding:9px 11px;background:transparent;color:#aeb6ca;border:0;border-radius:8px}
+.tools button.active{background:#353b4c;color:white}
+.chart{height:300px;width:100%;display:block}
+.pricebox{text-align:center;padding:25px 12px}
+.pricebox h2{font-size:clamp(30px,6vw,45px);color:var(--green);margin:12px 0}
+.pill{font-size:11px;color:var(--green);background:#15332f;border-radius:7px;padding:6px 9px}
+h3{font-size:16px;margin:4px 0 16px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:#aab4ca;background:var(--panel2);padding:12px}
+td{padding:12px;border-bottom:1px solid #242a3c}
+.green{color:var(--green)}.red{color:var(--red)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:17px}
+input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50;
+ border-radius:10px;color:white;margin:8px 0 14px}
+.primary{width:100%;padding:14px;border:0;border-radius:11px;color:white;
+ font-weight:bold;background:linear-gradient(110deg,var(--purple),var(--blue))}
+.secondary{padding:12px;border:1px solid var(--border);border-radius:10px;
+ background:var(--panel2);color:white}
+.nav{position:fixed;bottom:0;left:0;right:0;z-index:10;background:#0d0e15;
+ border-top:1px solid var(--border);display:flex;justify-content:space-around;
+ padding:9px 2px 7px}
+.nav button{flex:1;background:none;border:0;color:#838ba1;font-size:10px}
+.nav button span{display:block;font-size:23px;margin-bottom:4px}
+.nav button.active{color:#8fa2ff}
+.nav button.trade span{background:linear-gradient(135deg,var(--purple),var(--blue));
+ color:white;border-radius:50%;width:48px;height:48px;display:grid;place-items:center;
+ margin:-22px auto 4px;border:3px solid #171824;font-size:25px}
+.page-title{font-size:25px;margin:5px 0 18px}
+.stat{background:var(--panel2);padding:14px;border-radius:11px;margin:8px 0}
+#toast{position:fixed;top:85px;left:50%;transform:translateX(-50%);
+ background:#252b40;padding:12px 16px;border-radius:10px;z-index:20;
+ max-width:90%;font-size:13px}
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;
+ padding:25px 15px;background:radial-gradient(ellipse at top,#1b1932,#090a10 70%)}
+.loginbox{width:100%;max-width:570px;padding:clamp(25px,7vw,55px);
+ border:1px solid #30303b;border-radius:30px;background:#121219}
+.loginbox h1{text-align:center;font-size:clamp(36px,8vw,58px);margin:25px 0 15px}
+.subtitle{text-align:center;color:#72adff;font-size:20px;line-height:1.5;margin-bottom:38px}
+.loginbox label{display:block;color:#a4a8b6;margin:17px 0 9px}
+.loginbox input{padding:17px;border-radius:17px}
+.demo{text-align:center;color:var(--muted);font-size:12px;line-height:1.8;margin-top:22px}
+.link{background:none;border:0;color:#09c8ee}
+@media(max-width:600px){
+ header{padding:11px}.brand{font-size:14px}.logo{width:38px;height:38px}
+ .headbtn{padding:9px 10px}main{padding:13px 9px 100px}
+ .card{padding:13px;margin-bottom:13px}.chart{height:285px}
+ .grid{grid-template-columns:1fr;gap:0}
+}
 </style>
 </head>
+
 <body>
+<div id="toast" class="hidden"></div>
+
+<!-- LOGIN -->
+<section id="login">
+ <div class="loginbox">
+  <div class="brand" style="justify-content:center">
+   <div class="logo">C</div>
+   <div>CryptoBigot<small>CRYPTO · DEMO EXCHANGE</small></div>
+  </div>
+  <h1 id="loginTitle">Welcome Back</h1>
+  <p class="subtitle">Access your demo dashboard securely 🚀</p>
+  <form id="loginForm">
+   <label for="username">Username</label>
+   <input id="username" placeholder="Enter username" autocomplete="username" required>
+   <label for="password">Password</label>
+   <input id="password" type="password" placeholder="Enter password" autocomplete="current-password" required>
+   <label style="display:flex;align-items:center;gap:8px;margin:12px 0">
+    <input type="checkbox" id="showPassword" style="width:auto;margin:0"> Show password
+   </label>
+   <button class="primary" id="loginButton" type="submit">Sign In</button>
+   <p id="loginMessage" class="small muted"></p>
+  </form>
+  <p class="demo">
+   DEMO ACCOUNT ONLY<br>
+   Username: <b>demo</b><br>Password: <b>demo123</b><br>
+   No real accounts, money, or transactions.
+  </p>
+ </div>
+</section>
+
+<!-- EXCHANGE -->
+<div id="app" class="hidden">
 <header>
-  <div class="logo">₿ CryptoBigot</div>
-  <div class="tag">DEMO MODE · NO REAL MONEY</div>
+ <div class="brand"><div class="logo">C</div>
+  <div>CryptoBigot<small>CRYPTO · DEMO EXCHANGE</small></div>
+ </div>
+ <div>
+  <button class="headbtn" id="settingsBtn" aria-label="Settings">⚙</button>
+  <button class="headbtn" id="noticeBtn" aria-label="Notifications">♧</button>
+  <button class="headbtn" id="logoutBtn" aria-label="Sign out">↪</button>
+ </div>
 </header>
+
 <main>
-  <h1>Your crypto dashboard</h1>
-  <p class="muted">Explore a simulated cryptocurrency trading platform.</p>
-  <div class="notice">⚠️ Practice only. Prices and balances are examples, not live market data. No real transactions occur.</div>
-
-  <div class="grid">
-    <div class="card">
-      <div class="label">Demo portfolio value</div>
-      <div class="price" id="portfolio">$10,000.00</div>
-    </div>
-    <div class="card">
-      <div class="label">Bitcoin (BTC) demo price</div>
-      <div class="price">$67,000.00</div>
-      <div class="green">Example price only</div>
-    </div>
-    <div class="card">
-      <div class="label">Your demo cash</div>
-      <div class="price" id="cash">$5,000.00</div>
-    </div>
-    <div class="card">
-      <div class="label">Your demo Bitcoin</div>
-      <div class="price" id="btc">0.07462687 BTC</div>
-    </div>
+<section id="homePage">
+ <div class="card">
+  <button class="pair" id="pairButton">
+   <span><span class="coin" id="coinIcon">₿</span><span id="pairName">BTC/USDT</span></span>
+   <span>⌄</span>
+  </button>
+  <div class="tools">
+   <button data-interval="1m">1m</button>
+   <button data-interval="30m">30m</button>
+   <button data-interval="1h">1h</button>
+   <button class="active" data-interval="15m">15m</button>
+   <button id="chartMode">Candles</button>
   </div>
+  <canvas id="chart" class="chart"></canvas>
+  <p class="small muted">Illustrative chart · Simulated prices · Not live market data</p>
+ </div>
 
-  <div class="controls">
-    <div class="card">
-      <h2>Buy Bitcoin</h2>
-      <p class="muted">Use your fictional demo cash.</p>
-      <label for="buyAmount">Amount in USD</label>
-      <input id="buyAmount" type="number" min="1" step="1" placeholder="Example: 100">
-      <button class="buy" onclick="trade('buy')">Buy BTC (Demo)</button>
-    </div>
-    <div class="card">
-      <h2>Sell Bitcoin</h2>
-      <p class="muted">Sell your fictional demo Bitcoin.</p>
-      <label for="sellAmount">Amount in USD</label>
-      <input id="sellAmount" type="number" min="1" step="1" placeholder="Example: 100">
-      <button class="sell" onclick="trade('sell')">Sell BTC (Demo)</button>
-    </div>
-  </div>
+ <div class="card pricebox">
+  <div class="muted" id="pricePair">BTC/USDT</div>
+  <h2 id="mainPrice">$82,898.35</h2>
+  <span id="change" class="green">+0.42% (demo)</span>
+  <p class="muted">Available demo balance</p>
+  <strong id="balance">$10,000.00</strong> USDT
+ </div>
 
+ <div class="card">
+  <h3>Order Book <span class="pill">DEMO</span></h3>
+  <table><thead><tr><th>PRICE (USDT)</th><th>QTY</th><th>TOTAL</th></tr></thead>
+  <tbody id="book"></tbody></table>
+ </div>
+
+ <div class="grid">
   <div class="card">
-    <h2>Markets</h2>
-    <table>
-      <thead><tr><th>Asset</th><th>Symbol</th><th>Example price</th></tr></thead>
-      <tbody>
-        <tr><td>₿ Bitcoin</td><td>BTC</td><td>$67,000.00</td></tr>
-        <tr><td>◆ Ethereum</td><td>ETH</td><td>$3,200.00</td></tr>
-        <tr><td>◎ Solana</td><td>SOL</td><td>$150.00</td></tr>
-      </tbody>
-    </table>
+   <h3>Practice Trading</h3>
+   <label class="muted">Order</label>
+   <select id="side"><option value="buy">Buy</option><option value="sell">Sell</option></select>
+   <label class="muted">Amount in USDT</label>
+   <input id="amount" type="number" min="1" value="100">
+   <button class="primary" id="placeOrder">Place Demo Order</button>
+   <p class="small muted">Simulated only. No real trades occur.</p>
   </div>
-  <p id="message" class="muted" role="status">Ready to practice? Try a demo trade above.</p>
+  <div class="card">
+   <h3>Markets</h3>
+   <div class="stat">BTC/USDT <strong id="btcPrice">$82,898.35</strong></div>
+   <div class="stat">XRP/USDT <strong id="xrpPrice">$1.38</strong></div>
+   <p class="small muted">Prices are randomly simulated.</p>
+  </div>
+ </div>
+</section>
+
+<section id="marketsPage" class="hidden">
+ <h2 class="page-title">Markets</h2>
+ <div class="card"><h3>Available demo markets</h3>
+  <button class="pair marketPick" data-symbol="BTC">₿ Bitcoin / USDT　 →</button><br><br>
+  <button class="pair marketPick" data-symbol="XRP">✕ XRP / USDT　 →</button>
+ </div>
+</section>
+
+<section id="tradePage" class="hidden">
+ <h2 class="page-title">Convert</h2>
+ <div class="card">
+  <h3>Demo Asset Converter</h3>
+  <label class="muted">From</label>
+  <select id="from"><option>USDT</option><option>BTC</option><option>XRP</option></select>
+  <label class="muted">Amount</label><input id="convertAmount" type="number" min="0.000001" value="100">
+  <label class="muted">To</label>
+  <select id="to"><option>BTC</option><option>XRP</option><option>USDT</option></select>
+  <button class="primary" id="convert">Preview Conversion</button>
+  <p id="convertResult" class="muted small"></p>
+ </div>
+</section>
+
+<section id="walletPage" class="hidden">
+ <h2 class="page-title">Demo Wallet</h2>
+ <div class="card pricebox"><p class="muted">Demo balance</p>
+  <h2 id="walletBalance">$10,000.00</h2><span class="pill">PRACTICE ONLY</span>
+ </div>
+ <div class="card"><h3>Demo Activity</h3><div id="activity" class="muted small">No activity yet.</div>
+  <p class="small muted">Deposits and withdrawals are disabled.</p>
+ </div>
+ <button class="secondary" id="walletLogout">Sign Out</button>
+</section>
+
+<section id="settingsPage" class="hidden">
+ <h2 class="page-title">Settings</h2>
+ <div class="card"><h3>Demo Settings</h3>
+  <p class="muted">CryptoBigot practice interface</p>
+  <p class="small muted">No real account or exchange connection is configured.</p>
+  <button class="secondary" id="settingsLogout">Sign Out</button>
+ </div>
+</section>
 </main>
-<footer>CryptoBigot Demo · Educational use only · No deposits or withdrawals</footer>
+
+<nav class="nav">
+ <button class="active" data-page="home"><span>⌂</span>Home</button>
+ <button data-page="markets"><span>▥</span>Markets</button>
+ <button class="trade" data-page="trade"><span>⇄</span>Convert</button>
+ <button data-page="wallet"><span>▣</span>Wallet</button>
+ <button data-page="settings"><span>⚙</span>Settings</button>
+</nav>
+</div>
 
 <script>
-const price = 67000;
-let cash = 5000;
-let btc = 5000 / price;
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const prices={BTC:82898.35,XRP:1.3798};
+let symbol="BTC",balance=10000,candles=[],tick=0,candleMode=true;
+let activity=[];
 
-function money(n) {
-  return n.toLocaleString("en-US", {
-    style: "currency", currency: "USD"
+function money(n){
+ return Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function toast(s){
+ $("toast").textContent=s;$("toast").classList.remove("hidden");
+ clearTimeout(toast.timer);toast.timer=setTimeout(()=>$("toast").classList.add("hidden"),2800);
+}
+function current(){return prices[symbol];}
+
+function login(){
+ $("login").classList.add("hidden");$("app").classList.remove("hidden");
+ render();draw();
+}
+function logout(){
+ sessionStorage.removeItem("cb_demo_login");
+ $("app").classList.add("hidden");$("login").classList.remove("hidden");
+ $("loginMessage").textContent="Signed out.";
+}
+$("showPassword").onchange=()=>{
+ $("password").type=$("showPassword").checked?"text":"password";
+};
+$("loginForm").addEventListener("submit",e=>{
+ e.preventDefault();
+ if($("username").value.trim()==="demo"&&$("password").value==="demo123"){
+  sessionStorage.setItem("cb_demo_login","yes");login();
+ }else{
+  $("loginMessage").textContent="Incorrect demo credentials. Try demo / demo123.";
+ }
+});
+
+function go(page){
+ ["home","markets","trade","wallet","settings"].forEach(p=>
+  $(p+"Page").classList.toggle("hidden",p!==page));
+ document.querySelectorAll(".nav button").forEach(b=>
+  b.classList.toggle("active",b.dataset.page===page));
+ if(page==="home")setTimeout(draw,50);
+ if(page==="wallet")renderWallet();
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>go(b.dataset.page));
+$("settingsBtn").onclick=()=>go("settings");
+$("noticeBtn").onclick=()=>toast("No demo notifications.");
+["logoutBtn","walletLogout","settingsLogout"].forEach(id=>$(id).onclick=logout);
+
+function setSymbol(s){
+ symbol=s;
+ $("pairName").textContent=s+"/USDT";
+ $("pricePair").textContent=s+"/USDT";
+ $("coinIcon").textContent=s==="BTC"?"₿":"✕";
+ $("coinIcon").classList.toggle("xrp",s==="XRP");
+ candles=[];
+ for(let i=0;i<45;i++)candles.push(prices[s]*(1+(Math.random()-.5)*.015));
+ render();draw();
+}
+$("pairButton").onclick=()=>setSymbol(symbol==="BTC"?"XRP":"BTC");
+document.querySelectorAll(".marketPick").forEach(b=>b.onclick=()=>{
+ setSymbol(b.dataset.symbol);go("home");
+});
+document.querySelectorAll("[data-interval]").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll("[data-interval]").forEach(x=>x.classList.remove("active"));
+ b.classList.add("active");draw();
+});
+$("chartMode").onclick=()=>{
+ candleMode=!candleMode;$("chartMode").textContent=candleMode?"Candles":"Line";draw();
+};
+
+function draw(){
+ const c=$("chart"),r=c.getBoundingClientRect();
+ if(!r.width||!r.height)return;
+ const d=window.devicePixelRatio||1;
+ c.width=r.width*d;c.height=r.height*d;
+ const ctx=c.getContext("2d");ctx.setTransform(d,0,0,d,0,0);
+ const w=r.width,h=r.height;
+ ctx.fillStyle="#111522";ctx.fillRect(0,0,w,h);
+ for(let i=0;i<6;i++){
+  let y=20+i*(h-40)/5;
+  ctx.strokeStyle="#282e40";ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();
+ }
+ if(candles.length<2)return;
+ const lo=Math.min(...candles)*.997,hi=Math.max(...candles)*1.003;
+ const Y=v=>20+(hi-v)/(hi-lo)*(h-45),step=w/candles.length;
+ if(candleMode){
+  candles.forEach((v,i)=>{
+   let prev=candles[Math.max(0,i-1)],x=i*step+step/2;
+   let yo=Y(prev),yc=Y(v),up=v>=prev;
+   ctx.strokeStyle=up?"#20c997":"#f34c62";
+   ctx.fillStyle=ctx.strokeStyle;
+   ctx.beginPath();ctx.moveTo(x,Math.min(yo,yc)-5);ctx.lineTo(x,Math.max(yo,yc)+5);ctx.stroke();
+   ctx.fillRect(x-step*.28,Math.min(yo,yc),Math.max(2,step*.55),Math.max(2,Math.abs(yc-yo)));
   });
+ }else{
+  ctx.strokeStyle="#20c997";ctx.lineWidth=2;ctx.beginPath();
+  candles.forEach((v,i)=>i?ctx.lineTo(i*step,Y(v)):ctx.moveTo(0,Y(v)));
+  ctx.stroke();ctx.lineWidth=1;
+ }
+ ctx.fillStyle="#20c997";ctx.font="12px Arial";
+ ctx.fillText("DEMO PRICE: "+money(current()),8,h-8);
 }
-function update() {
-  document.getElementById("cash").textContent = money(cash);
-  document.getElementById("btc").textContent = btc.toFixed(8) + " BTC";
-  document.getElementById("portfolio").textContent = money(cash + btc * price);
-}
-function trade(type) {
-  const field = document.getElementById(
-    type === "buy" ? "buyAmount" : "sellAmount"
-  );
-  const amount = Number(field.value);
-  const message = document.getElementById("message");
 
-  if (!Number.isFinite(amount) || amount <= 0) {
-    message.textContent = "Enter a valid amount greater than zero.";
-    return;
-  }
-  if (type === "buy") {
-    if (amount > cash) {
-      message.textContent = "Not enough demo cash for this trade.";
-      return;
-    }
-    cash -= amount;
-    btc += amount / price;
-    message.textContent = "Demo purchase complete. No real Bitcoin was bought.";
-  } else {
-    if (amount > btc * price) {
-      message.textContent = "Not enough demo Bitcoin for this sale.";
-      return;
-    }
-    btc -= amount / price;
-    cash += amount;
-    message.textContent = "Demo sale complete. No real Bitcoin was sold.";
-  }
-  field.value = "";
-  update();
+function renderBook(){
+ const p=current();$("book").innerHTML="";
+ for(let i=5;i>=1;i--){
+  const v=p*(1+i*.00012),q=Math.random()*1.8+.01;
+  $("book").innerHTML+=`<tr><td class="red">${money(v)}</td><td>${q.toFixed(4)}</td><td>${money(v*q)}</td></tr>`;
+ }
+ for(let i=1;i<=7;i++){
+  const v=p*(1-i*.00012),q=Math.random()*1.8+.01;
+  $("book").innerHTML+=`<tr><td class="green">${money(v)}</td><td>${q.toFixed(4)}</td><td>${money(v*q)}</td></tr>`;
+ }
 }
+function render(){
+ $("mainPrice").textContent="$"+money(current());
+ $("balance").textContent="$"+money(balance);
+ $("walletBalance").textContent="$"+money(balance);
+ $("btcPrice").textContent="$"+money(prices.BTC);
+ $("xrpPrice").textContent="$"+money(prices.XRP);
+ renderBook();renderWallet();
+}
+function renderWallet(){
+ $("walletBalance").textContent="$"+money(balance);
+ $("activity").innerHTML=activity.length?activity.map(x=>"<p>"+x+"</p>").join(""):"No activity yet.";
+}
+
+$("placeOrder").onclick=()=>{
+ const amount=Number($("amount").value),side=$("side").value;
+ if(!Number.isFinite(amount)||amount<=0)return toast("Enter a valid amount.");
+ if(side==="buy"&&amount>balance)return toast("Insufficient demo balance.");
+ if(side==="buy")balance-=amount;else balance+=amount;
+ activity.unshift(`${side.toUpperCase()} ${symbol}/USDT — ${money(amount)} USDT (simulated)`);
+ render();toast("Demo order completed. No real trade was placed.");
+};
+$("convert").onclick=()=>{
+ const amount=Number($("convertAmount").value),from=$("from").value,to=$("to").value;
+ const p={USDT:1,...prices};
+ if(!Number.isFinite(amount)||amount<=0)return $("convertResult").textContent="Enter a valid amount.";
+ if(from===to)return $("convertResult").textContent="Select two different assets.";
+ $("convertResult").textContent="Estimated demo result: "+(amount*p[from]/p[to]).toFixed(to==="USDT"?2:8)+" "+to+". Nothing was exchanged.";
+};
+window.addEventListener("resize",draw);
+
+setInterval(()=>{
+ tick++;
+ for(const s of ["BTC","XRP"])prices[s]*=1+(Math.random()-.5)*.0008;
+ if(candles.length)candles.push(current());
+ if(candles.length>45)candles.shift();
+ if(!$("app").classList.contains("hidden")){
+  render();
+  if(!$("homePage").classList.contains("hidden"))draw();
+ }
+},3000);
+
+setSymbol("BTC");
+if(sessionStorage.getItem("cb_demo_login")==="yes")login();
+})();
+</script>
+</body>
+</html>
 
