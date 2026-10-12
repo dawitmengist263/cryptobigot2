@@ -261,9 +261,25 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
 
 <section id="settingsPage" class="hidden">
  <h2 class="page-title">Settings</h2>
- <div class="card"><h3>Demo Settings</h3>
-  <p class="muted">CryptoBigot practice interface</p>
-  <p class="small muted">No real account or exchange connection is configured.</p>
+ <div class="card">
+  <h3>Profile information</h3>
+  <p class="small muted">Edit your details and press Save Changes. Saved settings remain in this browser after you close or refresh the page.</p>
+  <form id="profileSettingsForm">
+   <label class="muted" for="profileUsername">Username</label>
+   <input id="profileUsername" maxlength="40" autocomplete="nickname" placeholder="Your username" required>
+   <label class="muted" for="profileEmail">Email address</label>
+   <input id="profileEmail" type="email" maxlength="120" autocomplete="email" placeholder="you@example.com">
+   <label class="muted" for="profilePhone">Phone number</label>
+   <input id="profilePhone" type="tel" maxlength="25" autocomplete="tel" placeholder="+1 555 123 4567">
+   <label class="muted" for="profileCurrency">Display currency</label>
+   <select id="profileCurrency"><option value="USD">USD — US Dollar</option><option value="EUR">EUR — Euro</option><option value="GBP">GBP — British Pound</option><option value="ETB">ETB — Ethiopian Birr</option></select>
+   <label style="display:flex;align-items:center;gap:10px;margin:10px 0 18px"><input id="profileNotifications" type="checkbox" style="width:auto;margin:0"> Enable demo notifications</label>
+   <button class="primary" type="submit">Save Changes</button>
+   <p id="profileSaveMessage" class="small muted" aria-live="polite"></p>
+  </form>
+ </div>
+ <div class="card"><h3>Preferences</h3>
+  <p class="small muted">Your market watchlist is also saved in this browser. This demo does not yet sync profile settings between devices or store them in a cloud database.</p>
   <button class="secondary" id="settingsLogout">Sign Out</button>
  </div>
 </section>
@@ -294,6 +310,38 @@ function toast(s){
  clearTimeout(toast.timer);toast.timer=setTimeout(()=>$("toast").classList.add("hidden"),2800);
 }
 function current(){return prices[symbol];}
+
+// Persist editable profile preferences in this browser (demo only; no password is stored here).
+const profileStorageKey="cb_demo_profile_settings";
+function loadProfileSettings(){
+ let p={};
+ try{p=JSON.parse(localStorage.getItem(profileStorageKey)||"{}")||{};}catch(e){}
+ $("profileUsername").value=p.username||"demo";
+ $("profileEmail").value=p.email||"";
+ $("profilePhone").value=p.phone||"";
+ $("profileCurrency").value=p.currency||"USD";
+ $("profileNotifications").checked=!!p.notifications;
+}
+$("profileSettingsForm").addEventListener("submit",e=>{
+ e.preventDefault();
+ const p={
+  username:$("profileUsername").value.trim(),
+  email:$("profileEmail").value.trim(),
+  phone:$("profilePhone").value.trim(),
+  currency:$("profileCurrency").value,
+  notifications:$("profileNotifications").checked,
+  updatedAt:new Date().toISOString()
+ };
+ if(!p.username){$("profileSaveMessage").textContent="Please enter a username.";return;}
+ try{
+  localStorage.setItem(profileStorageKey,JSON.stringify(p));
+  $("profileSaveMessage").textContent="Saved successfully on this device.";
+  toast("Settings saved.");
+ }catch(err){
+  $("profileSaveMessage").textContent="Could not save. Check your browser storage settings.";
+ }
+});
+loadProfileSettings();
 
 function login(){
  $("login").classList.add("hidden");$("app").classList.remove("hidden");
