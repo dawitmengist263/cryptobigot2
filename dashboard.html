@@ -3,338 +3,384 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CryptoBigot | Demo Dashboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CryptoBigot Exchange — Demo</title>
 <style>
-:root {
-  --bg:#0b0b11; --panel:#171725; --border:#292939;
-  --muted:#9999ad; --blue:#477df5; --purple:#8757f5;
-  --green:#32d583; --white:#f7f7fc;
-}
-* { box-sizing:border-box; }
-body {
-  margin:0; background:var(--bg); color:var(--white);
-  font-family:Arial,Helvetica,sans-serif;
-}
-button,select { font:inherit; cursor:pointer; }
-button { color:white; }
-.topbar {
-  position:sticky;top:0;z-index:5;background:#101018;
-  border-bottom:1px solid var(--border);
-  padding:17px 20px;display:flex;justify-content:space-between;
-  align-items:center;
-}
-.brand {font-size:21px;font-weight:800;letter-spacing:.3px}
-.brand span {color:#8b69ff}
-.demo-tag {
-  font-size:11px;color:#b9a7ff;border:1px solid #55418b;
-  padding:6px 9px;border-radius:20px;
-}
-main {max-width:950px;margin:auto;padding:22px 16px 105px}
-.balance-card {
-  background:linear-gradient(140deg,#191929,#1c192f);
-  border:1px solid #303044;border-radius:25px;padding:25px 22px;
-  box-shadow:0 12px 35px #0003;
-}
-.eyebrow {color:var(--muted);font-size:14px}
-.balance-line {display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:18px 0 8px}
-.balance {font-size:clamp(29px,6vw,43px);font-weight:800;letter-spacing:-1px}
-select {
-  background:#29293b;border:1px solid #414157;border-radius:12px;
-  padding:10px;color:white;
-}
-.subbalance {color:#aaaabd;font-size:17px}
-.stats {
-  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:12px;border-top:1px solid #343446;margin-top:24px;padding-top:22px;
-}
-.stat-label {font-size:13px;color:var(--muted);margin-bottom:9px}
-.stat-value {font-size:clamp(15px,3vw,21px);font-weight:700;overflow-wrap:anywhere}
-.green {color:var(--green)}
-.chart-title {color:var(--muted);font-size:14px;margin-top:25px}
-.chart {height:70px;width:100%;margin-top:8px}
-.chart svg {width:100%;height:100%}
-.primary-actions {display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
-.btn {
-  border:1px solid var(--border);border-radius:14px;
-  padding:15px 10px;background:#282838;font-weight:700;
-}
-.btn-main {background:linear-gradient(110deg,var(--purple),var(--blue));border:0}
-.notice {
-  margin:18px 0;background:#1c1a29;border:1px solid #353044;
-  padding:16px;border-radius:17px;color:#e9d36b;font-size:14px;
-  line-height:1.5;
-}
-.action-grid {
-  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:10px;padding:15px;background:#111118;border:1px solid var(--border);
-  border-radius:23px;
-}
-.action {
-  min-width:0;background:#171720;border:1px solid #30303c;
-  border-radius:18px;padding:17px 4px 14px;display:flex;
-  flex-direction:column;align-items:center;gap:10px;
-}
-.action:hover,.coin:hover {border-color:#7460d8}
-.action-icon {
-  width:43px;height:43px;border-radius:14px;display:grid;
-  place-items:center;font-size:23px;background:#25223a;
-}
-.action-label {font-size:12px;color:#d0d0dc}
-.section-heading {
-  display:flex;justify-content:space-between;align-items:center;
-  gap:10px;margin:28px 0 14px;font-size:20px;font-weight:750;
-}
-.section-heading small {font-size:13px;color:#7da5ff;font-weight:400}
-.coins {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.coin {
-  background:#15151e;border:1px solid var(--border);
-  border-radius:18px;padding:16px;display:flex;align-items:center;gap:12px;
-}
-.coin-logo {
-  width:39px;height:39px;border-radius:50%;display:grid;
-  place-items:center;background:#28263b;font-weight:800;
-}
-.coin-name {font-weight:700}
-.coin-desc {font-size:12px;color:var(--muted);margin-top:5px}
-.coin-price {margin-left:auto;text-align:right;font-size:14px;font-weight:700}
-.bottom-nav {
-  position:fixed;bottom:0;left:0;right:0;z-index:8;
-  background:#101018f5;border-top:1px solid #292938;
-  display:flex;justify-content:space-around;align-items:center;
-  padding:10px 4px max(10px,env(safe-area-inset-bottom));
-}
-.nav-item {
-  background:none;border:0;color:#9292a7;display:flex;
-  flex-direction:column;align-items:center;gap:5px;font-size:10px;
-  min-width:45px;
-}
-.nav-item .nav-icon {font-size:22px}
-.nav-item.active {color:#6294ff}
-.nav-trade {
-  background:linear-gradient(130deg,var(--purple),var(--blue));
-  color:white;border-radius:50%;width:48px;height:48px;
-  justify-content:center;font-size:23px;
-}
-.modal-backdrop {
-  display:none;position:fixed;inset:0;background:#000b;z-index:20;
-  align-items:center;justify-content:center;padding:20px;
-}
-.modal-backdrop.open {display:flex}
-.modal {
-  background:#1a1a29;border:1px solid #3a3a50;border-radius:22px;
-  padding:24px;width:100%;max-width:390px;
-}
-.modal h2 {margin-top:0}
-.modal p {color:#b6b6c9;line-height:1.6;font-size:14px}
-.modal input,.modal select {
-  width:100%;padding:13px;margin:7px 0 14px;background:#101018;
-  border:1px solid #3a3a50;border-radius:10px;color:white;
-}
-.modal label {font-size:13px;color:#c6c6d5}
-.modal-buttons {display:flex;gap:10px;margin-top:15px}
-.modal-buttons button {flex:1}
-.footer-note {text-align:center;color:#727286;font-size:12px;margin-top:25px}
-@media(max-width:480px) {
-  main {padding:14px 12px 105px}
-  .balance-card {padding:21px 16px}
-  .stats {gap:8px}
-  .action-grid {gap:7px;padding:10px}
-  .action {padding:13px 2px}
-  .action-icon {width:38px;height:38px}
-  .action-label {font-size:11px}
-  .coins {grid-template-columns:1fr}
+:root{--bg:#080910;--panel:#111522;--panel2:#171c2d;--line:#252b3d;--muted:#8e96aa;--text:#f5f6fc;--purple:#8958f5;--blue:#477ef6;--green:#20c997;--red:#f05b70}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px Arial,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer;color:inherit}
+header{height:66px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:#0c0f19;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.logo{font-weight:800;font-size:20px;color:#a889ff}.logo small{display:block;color:#7d879d;font-size:9px;letter-spacing:2px;margin-top:3px}
+.header-actions{display:flex;gap:8px}
+.icon-btn{width:40px;height:40px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;font-size:18px}
+.demo{font-size:10px;color:#d4c6ff;border:1px solid #544180;border-radius:20px;padding:7px 10px}
+main{max-width:1000px;margin:auto;padding:18px 15px 105px}
+.page{display:none}.page.active{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:19px;padding:17px;margin-bottom:14px}
+.page-heading{display:flex;align-items:center;justify-content:space-between;margin:5px 0 18px}
+h1{font-size:23px;margin:0}h2{font-size:17px;margin:0 0 16px}
+.muted{color:var(--muted)}.small{font-size:12px}
+.balance-card{background:linear-gradient(135deg,#171c30,#19152d);padding:23px}
+.balance{font-size:clamp(30px,6vw,43px);font-weight:800;letter-spacing:-1px;margin:13px 0}
+.pill{border:1px solid #343b50;background:#22283a;color:#dce2f5;border-radius:10px;padding:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;border-top:1px solid var(--line);padding-top:20px;margin-top:22px}
+.stat-label{font-size:12px;color:var(--muted);margin-bottom:9px}.stat-value{font-size:clamp(14px,3vw,19px);font-weight:700;overflow-wrap:anywhere}
+.green{color:var(--green)}.red{color:var(--red)}
+.btn{padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:#202438;font-weight:700}
+.btn-primary{background:linear-gradient(110deg,var(--purple),var(--blue));border:0}
+.btn-green{background:#123d37;color:#42e0b0;border:1px solid #205d50}
+.btn-red{background:#421e2c;color:#ff8191;border:1px solid #693040}
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.action{background:#131725;border:1px solid var(--line);border-radius:15px;padding:17px 4px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.action-icon{display:grid;place-items:center;width:43px;height:43px;border-radius:14px;background:#24203c;font-size:22px;color:#ad8bff}
+.action span:last-child{font-size:12px}
+.notice{padding:13px 15px;background:#201e2a;border:1px solid #3b354c;border-radius:13px;color:#d5c6ff;line-height:1.5;margin-bottom:15px;font-size:12px}
+.filters{display:flex;gap:8px;overflow:auto;padding:2px 0 14px}
+.filter{white-space:nowrap;background:#191d2b;border:1px solid var(--line);border-radius:30px;padding:10px 17px;color:#aeb5c7}
+.filter.active{background:#f5d849;color:#151515;border-color:#f5d849;font-weight:700}
+.search{width:100%;background:#0c101a;color:white;border:1px solid #30374a;border-radius:12px;padding:13px;margin-bottom:15px;outline:none}
+.market-head,.market-row{display:grid;grid-template-columns:minmax(125px,1.4fr) minmax(85px,1fr) minmax(78px,.8fr) auto;align-items:center;gap:8px}
+.market-head{color:var(--muted);padding:10px 2px 14px;border-bottom:1px solid var(--line);font-size:12px}
+.market-row{padding:16px 2px;border-bottom:1px solid #242838;min-height:82px}
+.market-row:last-child{border-bottom:0}
+.coin{display:flex;align-items:center;gap:9px;min-width:0}
+.coin-icon{width:37px;height:37px;border-radius:50%;display:grid;place-items:center;font-size:16px;font-weight:800;background:#252a3b;flex-shrink:0}
+.coin-name{font-weight:700;font-size:14px}.coin-pair{font-size:11px;color:var(--muted);margin-top:4px}
+.price{font-weight:700;font-size:13px}.change{font-size:12px;font-weight:700;padding:8px 7px;border-radius:9px;text-align:center;white-space:nowrap}
+.change.down{background:#401f2a;color:#ff7587}.change.up{background:#123a32;color:#41dfad}
+.trade-small{background:linear-gradient(110deg,var(--purple),var(--blue));border:0;border-radius:10px;padding:9px 12px;font-weight:700}
+.star{background:none;border:0;color:#737d93;font-size:19px;padding:3px}
+.star.on{color:#f5d849}
+.pair-select{width:100%;background:#171e31;border:1px solid #303950;color:white;border-radius:13px;padding:14px;margin-bottom:14px;font-weight:700}
+.chart-tools{display:flex;gap:5px;overflow:auto;margin-bottom:12px}
+.chart-tools button{padding:9px 12px;border:0;border-radius:8px;background:transparent;color:#b7bfd1;white-space:nowrap}
+.chart-tools button.active{background:#32394b;color:white}
+.chart-wrap{background:#0e1320;border:1px solid #242c40;border-radius:12px;overflow:hidden}
+.chart-wrap svg{display:block;width:100%;height:auto;min-height:210px}
+.price-box{text-align:center;background:#101729;border:1px solid #263148;border-radius:15px;padding:20px;margin-top:14px}
+.big-price{font-size:clamp(28px,6vw,40px);font-weight:800;color:var(--green);margin:10px 0}
+.trade-layout{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field-label{display:block;color:var(--muted);font-size:12px;margin:12px 0 7px}
+.field{width:100%;background:#0d111c;border:1px solid #30374b;color:white;border-radius:10px;padding:12px}
+.buy-sell{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:13px}
+.book-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:9px 0;border-bottom:1px solid #242838;font-size:12px}
+.book-row span:last-child{text-align:right}
+.wallet-row{display:flex;align-items:center;gap:12px;padding:15px 0;border-bottom:1px solid var(--line)}
+.wallet-row:last-child{border:0}
+.wallet-info{flex:1}.wallet-value{text-align:right;font-weight:700}.wallet-value small{display:block;color:var(--muted);margin-top:5px;font-weight:400}
+.empty{padding:28px 5px;text-align:center;color:var(--muted);line-height:1.6}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:10;display:flex;justify-content:space-around;align-items:center;background:#0c0e17f7;border-top:1px solid var(--line);padding:8px 3px max(9px,env(safe-area-inset-bottom))}
+.nav{background:none;border:0;color:#8a91a5;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10px;min-width:48px}
+.nav b{font-size:22px;font-weight:400}.nav.active{color:#6797ff}
+.nav.center b{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:linear-gradient(130deg,var(--purple),var(--blue));color:white;font-size:24px;margin-top:-19px;box-shadow:0 0 20px #6045d455}
+.modal-bg{display:none;position:fixed;inset:0;z-index:30;background:#000b;align-items:center;justify-content:center;padding:18px}
+.modal-bg.show{display:flex}.modal{width:100%;max-width:390px;background:#171c2c;border:1px solid #30384d;border-radius:18px;padding:22px}
+.modal h2{margin-bottom:10px}.modal p{color:#adb5c8;line-height:1.6}
+.modal input,.modal select{width:100%;background:#0d111c;color:white;border:1px solid #30374b;border-radius:10px;padding:12px;margin:7px 0 14px}
+@media(max-width:540px){
+ main{padding:13px 11px 105px}
+ header{padding:0 13px}
+ .card{padding:14px}
+ .balance-card{padding:20px 15px}
+ .market-head,.market-row{grid-template-columns:minmax(112px,1.3fr) minmax(76px,.9fr) minmax(70px,.8fr) auto;gap:5px}
+ .market-row{padding:14px 0}
+ .coin{gap:6px}.coin-icon{width:32px;height:32px;font-size:14px}
+ .coin-name{font-size:12px}.coin-pair{font-size:10px}
+ .price{font-size:12px}.change{font-size:10px;padding:7px 4px}
+ .trade-small{font-size:11px;padding:9px 8px}
+ .market-head{font-size:11px}
+ .trade-layout{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
-<header class="topbar">
-  <div class="brand">₿ Crypto<span>Bigot</span></div>
-  <div class="demo-tag">DEMO ACCOUNT</div>
+<header>
+ <div class="logo">CryptoBigot<small>CRYPTO EXCHANGE · DEMO</small></div>
+ <div class="header-actions">
+  <span class="demo">DEMO MODE</span>
+  <button class="icon-btn" data-page="settings" aria-label="Settings">⚙</button>
+  <button class="icon-btn" data-page="support" aria-label="Support">♧</button>
+ </div>
 </header>
 
 <main>
-  <section class="balance-card">
-    <div class="eyebrow">Estimated balance</div>
-    <div class="balance-line">
-      <div class="balance" id="balance">$10,000.00</div>
-      <select id="currency" aria-label="Display currency">
-        <option value="USD">USD</option>
-        <option value="USDT">USDT</option>
-      </select>
-    </div>
-    <div class="subbalance" id="subbalance">≈ $10,000.00 USD · Simulated funds</div>
-
-    <div class="stats">
-      <div>
-        <div class="stat-label">Today's PNL</div>
-        <div class="stat-value green" id="pnl">+$0.00</div>
-      </div>
-      <div>
-        <div class="stat-label">Portfolio value</div>
-        <div class="stat-value" id="portfolio">$10,000.00</div>
-      </div>
-      <div>
-        <div class="stat-label">Assets held</div>
-        <div class="stat-value" id="assets">2</div>
-      </div>
-    </div>
-
-    <div class="chart-title">7-day portfolio trend · illustrative</div>
-    <div class="chart">
-      <svg viewBox="0 0 500 70" preserveAspectRatio="none" aria-label="Illustrative portfolio chart">
-        <defs>
-          <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#32d583" stop-opacity=".22"/>
-            <stop offset="100%" stop-color="#32d583" stop-opacity="0"/>
-          </linearGradient>
-        </defs>
-        <path d="M0 56 L55 49 L105 54 L160 30 L215 39 L270 21 L330 33 L390 15 L445 23 L500 8 L500 70 L0 70Z" fill="url(#area)"/>
-        <path d="M0 56 L55 49 L105 54 L160 30 L215 39 L270 21 L330 33 L390 15 L445 23 L500 8" fill="none" stroke="#32d583" stroke-width="3"/>
-      </svg>
-    </div>
-    <div class="primary-actions">
-      <button class="btn btn-main" data-action="Deposit funds">↓ Deposit funds</button>
-      <button class="btn" data-action="Start trading">Start trading ↗</button>
-    </div>
-  </section>
-
-  <div class="notice">📣 <strong>Demo account notice</strong><br>
-    Explore the interface using fictional funds. No real deposits, withdrawals or cryptocurrency transfers are available.
+<section id="home" class="page active">
+ <div class="card balance-card">
+  <div class="muted">Estimated balance</div>
+  <div class="balance" id="balance">$10,000.00</div>
+  <div class="muted">≈ $10,000.00 USD · Demo funds</div>
+  <div class="stats">
+   <div><div class="stat-label">Today's PNL</div><div class="stat-value green" id="pnl">+$0.00</div></div>
+   <div><div class="stat-label">Portfolio value</div><div class="stat-value" id="portfolio">$10,000.00</div></div>
+   <div><div class="stat-label">Assets held</div><div class="stat-value" id="assetCount">4</div></div>
   </div>
+  <div class="muted small" style="margin-top:25px">7-day portfolio trend · illustrative</div>
+  <div class="chart-wrap" style="border:0;background:transparent;margin-top:8px">
+   <svg viewBox="0 0 500 85" role="img" aria-label="Illustrative seven day trend">
+    <defs><linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#20c997" stop-opacity=".22"/><stop offset="1" stop-color="#20c997" stop-opacity="0"/></linearGradient></defs>
+    <path d="M0 65 L60 56 L105 62 L155 38 L205 49 L260 27 L320 41 L380 17 L435 28 L500 8 L500 85 L0 85Z" fill="url(#fade)"/>
+    <path d="M0 65 L60 56 L105 62 L155 38 L205 49 L260 27 L320 41 L380 17 L435 28 L500 8" fill="none" stroke="#20c997" stroke-width="3"/>
+   </svg>
+  </div>
+  <div class="trade-layout" style="margin-top:15px">
+   <button class="btn btn-primary" data-page="wallet">↓ Deposit funds</button>
+   <button class="btn" data-page="trade">Start trading ↗</button>
+  </div>
+ </div>
+ <div class="notice">ⓘ <b>Demo account</b><br>All balances, orders and market prices are for demonstration. No real deposits or withdrawals are available.</div>
+ <div class="card"><div class="actions">
+  <button class="action" data-page="wallet"><span class="action-icon" style="color:#20c997">↓</span><span>Deposit</span></button>
+  <button class="action" data-page="wallet"><span class="action-icon" style="color:#f5bf4b">↑</span><span>Withdraw</span></button>
+  <button class="action" data-page="wallet"><span class="action-icon" style="color:#69a2ff">⇄</span><span>Transfer</span></button>
+  <button class="action" data-page="trade"><span class="action-icon">⇆</span><span>Trade</span></button>
+  <button class="action" data-page="markets"><span class="action-icon" style="color:#28c5da">⟳</span><span>Convert</span></button>
+  <button class="action" data-page="wallet"><span class="action-icon">◷</span><span>History</span></button>
+  <button class="action" data-page="markets"><span class="action-icon" style="color:#f5d849">⌁</span><span>Markets</span></button>
+  <button class="action" data-page="support"><span class="action-icon" style="color:#f477b9">☏</span><span>Support</span></button>
+ </div></div>
+ <div class="page-heading"><h2>Top movers</h2><button class="star" data-page="markets">View all markets →</button></div>
+ <div class="card" id="topMovers"></div>
+</section>
 
-  <section class="action-grid" aria-label="Account actions">
-    <button class="action" data-action="Deposit"><span class="action-icon" style="color:#32d583">↓</span><span class="action-label">Deposit</span></button>
-    <button class="action" data-action="Withdraw"><span class="action-icon" style="color:#f6b84a">↑</span><span class="action-label">Withdraw</span></button>
-    <button class="action" data-action="Transfer"><span class="action-icon" style="color:#65a2ff">⇄</span><span class="action-label">Transfer</span></button>
-    <button class="action" data-action="Trade"><span class="action-icon" style="color:#ac7aff">⇆</span><span class="action-label">Trade</span></button>
-    <button class="action" data-action="Convert"><span class="action-icon" style="color:#25c9df">⟳</span><span class="action-label">Convert</span></button>
-    <button class="action" data-action="History"><span class="action-icon">◷</span><span class="action-label">History</span></button>
-    <button class="action" data-action="Markets"><span class="action-icon" style="color:#f5d45c">⌁</span><span class="action-label">Markets</span></button>
-    <button class="action" data-action="Support"><span class="action-icon" style="color:#f477b9">☏</span><span class="action-label">Support</span></button>
-  </section>
+<section id="markets" class="page">
+ <div class="page-heading"><h1>Markets</h1><span class="muted">Demo prices</span></div>
+ <div class="card">
+  <div class="filters">
+   <button class="filter active" data-filter="All">All</button>
+   <button class="filter" data-filter="Watchlist">Watchlist</button>
+   <button class="filter" data-filter="Gainers">Gainers</button>
+   <button class="filter" data-filter="Losers">Losers</button>
+  </div>
+  <input id="search" class="search" placeholder="⌕  Search coin or symbol..." aria-label="Search markets">
+  <div class="market-head"><span>Pair</span><span>Price (USD)</span><span>24h change</span><span>Action</span></div>
+  <div id="marketRows"></div>
+ </div>
+ <div class="muted small">Prices and changes are fictional sample data, not live quotes.</div>
+</section>
 
-  <div class="section-heading"><span>Top movers</span><small>Demo prices</small></div>
-  <section class="coins">
-    <div class="coin"><div class="coin-logo">₿</div><div><div class="coin-name">Bitcoin · BTC</div><div class="coin-desc">Demo asset</div></div><div class="coin-price">$67,250</div></div>
-    <div class="coin"><div class="coin-logo">Ξ</div><div><div class="coin-name">Ethereum · ETH</div><div class="coin-desc">Demo asset</div></div><div class="coin-price">$3,420</div></div>
-    <div class="coin"><div class="coin-logo">◎</div><div><div class="coin-name">Solana · SOL</div><div class="coin-desc">Demo asset</div></div><div class="coin-price">$145.20</div></div>
-    <div class="coin"><div class="coin-logo">✕</div><div><div class="coin-name">XRP · XRP</div><div class="coin-desc">Demo asset</div></div><div class="coin-price">$0.58</div></div>
-  </section>
-  <div class="footer-note">CryptoBigot is a fictional trading demonstration. Prices are illustrative, not live market data.</div>
+<section id="trade" class="page">
+ <div class="page-heading"><h1>Spot Trading</h1><span class="demo">SIMULATED</span></div>
+ <div class="card">
+  <label class="field-label" for="pairSelect">Trading pair</label>
+  <select class="pair-select" id="pairSelect">
+   <option value="BTC">₿ BTC / USDT</option><option value="ETH">◆ ETH / USDT</option>
+   <option value="SOL">◎ SOL / USDT</option><option value="XRP">✕ XRP / USDT</option>
+   <option value="BNB">◆ BNB / USDT</option><option value="DOGE">Ð DOGE / USDT</option>
+  </select>
+  <div class="chart-tools">
+   <button data-interval="1m">1m</button><button data-interval="15m" class="active">15m</button>
+   <button data-interval="1h">1h</button><button data-interval="4h">4h</button><button data-interval="1d">1D</button>
+  </div>
+  <div class="chart-wrap"><svg id="candleChart" viewBox="0 0 620 300" role="img" aria-label="Illustrative candlestick chart"></svg></div>
+  <div class="price-box">
+   <div class="muted" id="chartPair">BTC / USDT</div>
+   <div class="big-price" id="chartPrice">$67,250.00</div>
+   <div class="muted small">Illustrative price · not live market data</div>
+  </div>
+ </div>
+ <div class="trade-layout">
+  <div class="card">
+   <h2>Place demo order</h2>
+   <div class="buy-sell"><button class="btn btn-green" id="buyTab">Buy</button><button class="btn" id="sellTab">Sell</button></div>
+   <label class="field-label" for="orderType">Order type</label>
+   <select class="field" id="orderType"><option>Market</option><option>Limit (simulated)</option></select>
+   <label class="field-label" for="orderAmount">Amount (USD)</label>
+   <input class="field" id="orderAmount" type="number" min="1" max="10000" value="100">
+   <div class="muted small" style="margin:12px 0">Available demo cash: <b id="cashAvailable">$10,000.00</b></div>
+   <button class="btn btn-green" id="placeOrder" style="width:100%">Simulate Buy</button>
+   <p class="muted small" id="orderMessage">No real order will be sent.</p>
+  </div>
+  <div class="card">
+   <h2>Order book <span class="muted small">· Sample</span></h2>
+   <div class="book-row muted"><span>Price (USDT)</span><span>Amount</span></div>
+   <div id="asks"></div>
+   <div style="text-align:center;padding:10px;color:var(--green);font-weight:700" id="midPrice">$67,250.00</div>
+   <div id="bids"></div>
+   <div class="muted small" style="margin-top:12px">Illustrative order-book entries.</div>
+  </div>
+ </div>
+ <div class="card"><h2>Recent demo orders</h2><div id="orderHistory" class="empty">No simulated orders yet.</div></div>
+</section>
+
+<section id="wallet" class="page">
+ <div class="page-heading"><h1>Wallet</h1><span class="demo">DEMO MODE</span></div>
+ <div class="card balance-card">
+  <div class="muted">Total demo portfolio</div><div class="balance" id="walletBalance">$10,000.00</div>
+  <div class="muted">Fictional funds only</div>
+ </div>
+ <div class="notice">Deposits, withdrawals and external wallet transfers are disabled in this demonstration. Never enter a seed phrase or private key on a demo site.</div>
+ <div class="card"><h2>Your assets</h2>
+  <div class="wallet-row"><div class="coin-icon">＄</div><div class="wallet-info"><b>Demo USD</b><div class="muted small">USD</div></div><div class="wallet-value" id="cashWallet">$10,000.00<small>Practice cash</small></div></div>
+  <div class="wallet-row"><div class="coin-icon">₿</div><div class="wallet-info"><b>Bitcoin</b><div class="muted small">BTC · sample price $67,250</div></div><div class="wallet-value">0.0000 BTC<small>Illustrative asset</small></div></div>
+  <div class="wallet-row"><div class="coin-icon">◆</div><div class="wallet-info"><b>Ethereum</b><div class="muted small">ETH · sample price $3,420</div></div><div class="wallet-value">0.0000 ETH<small>Illustrative asset</small></div></div>
+ </div>
+ <div class="card"><h2>Activity history</h2><div id="walletHistory" class="empty">No demo orders have been placed.</div></div>
+</section>
+
+<section id="browser" class="page">
+ <div class="page-heading"><h1>Explore</h1></div>
+ <div class="card"><h2>CryptoBigot demo</h2><p class="muted">Explore the dashboard and sample markets without connecting a wallet or depositing funds.</p><button class="btn btn-primary" data-page="markets">Explore markets</button></div>
+ <div class="card"><h2>Quick links</h2><div class="actions">
+  <button class="action" data-page="home"><span class="action-icon">⌂</span><span>Home</span></button>
+  <button class="action" data-page="markets"><span class="action-icon">⌁</span><span>Markets</span></button>
+  <button class="action" data-page="trade"><span class="action-icon">⇄</span><span>Trading</span></button>
+  <button class="action" data-page="wallet"><span class="action-icon">▣</span><span>Wallet</span></button>
+ </div></div>
+</section>
+
+<section id="support" class="page">
+ <div class="page-heading"><h1>Support</h1></div>
+ <div class="card"><h2>Demo help center</h2><p class="muted">CryptoBigot is a portfolio and trading interface demonstration. It is not a real exchange.</p><p>Never provide passwords, authentication codes, wallet recovery phrases or private keys to anyone.</p><button class="btn btn-primary" id="helpButton">View demo information</button><p id="helpText" class="muted small"></p></div>
+</section>
+
+<section id="settings" class="page">
+ <div class="page-heading"><h1>Settings</h1></div>
+ <div class="card"><h2>Appearance</h2><p class="muted">CryptoBigot uses a dark trading interface inspired by professional exchange dashboards.</p><div class="wallet-row"><span>Account mode</span><b class="demo">DEMO ONLY</b></div><div class="wallet-row"><span>Live transactions</span><b class="red">Disabled</b></div><div class="wallet-row"><span>Live market data</span><b class="muted">Not connected</b></div></div>
+</section>
 </main>
 
-<nav class="bottom-nav" aria-label="Main navigation">
-  <button class="nav-item active" data-action="Home"><span class="nav-icon">⌂</span>Home</button>
-  <button class="nav-item" data-action="Perpetuals"><span class="nav-icon">▥</span>Perpetuals</button>
-  <button class="nav-item nav-trade" data-action="Trade" aria-label="Trade">⇄</button>
-  <button class="nav-item" data-action="Browser"><span class="nav-icon">◎</span>Browser</button>
-  <button class="nav-item" data-action="Wallet"><span class="nav-icon">▣</span>Wallet</button>
+<nav class="bottom-nav">
+ <button class="nav active" data-page="home"><b>⌂</b>Home</button>
+ <button class="nav" data-page="markets"><b>▥</b>Markets</button>
+ <button class="nav center" data-page="trade" aria-label="Trade"><b>⇄</b></button>
+ <button class="nav" data-page="browser"><b>◎</b>Browser</button>
+ <button class="nav" data-page="wallet"><b>▣</b>Wallet</button>
 </nav>
 
-<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-  <div class="modal">
-    <h2 id="modalTitle">Demo action</h2>
-    <p id="modalMessage">This is a simulated demo feature.</p>
-    <div id="modalFields"></div>
-    <div class="modal-buttons">
-      <button class="btn" id="closeModal">Close</button>
-      <button class="btn btn-main" id="confirmAction">Try demo</button>
-    </div>
-  </div>
+<div class="modal-bg" id="modal">
+ <div class="modal"><h2 id="modalTitle">Demo notice</h2><p id="modalText"></p><button class="btn btn-primary" id="modalClose" style="width:100%">Close</button></div>
 </div>
 
 <script>
-const startingBalance = 10000;
-let demoBalance = startingBalance;
-let selectedAction = "";
-const backdrop = document.getElementById("modalBackdrop");
-const title = document.getElementById("modalTitle");
-const message = document.getElementById("modalMessage");
-const fields = document.getElementById("modalFields");
-const confirmButton = document.getElementById("confirmAction");
-
-function updateBalance() {
-  const currency = document.getElementById("currency").value;
-  const formatted = new Intl.NumberFormat("en-US", {
-    style:"currency", currency:currency === "USDT" ? "USD" : currency,
-    minimumFractionDigits:2, maximumFractionDigits:2
-  }).format(demoBalance);
-  document.getElementById("balance").textContent = formatted;
-  document.getElementById("portfolio").textContent = formatted;
-  document.getElementById("subbalance").textContent =
-    "≈ " + new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(demoBalance) +
-    " USD · Simulated funds";
-  document.getElementById("pnl").textContent =
-    (demoBalance-startingBalance >= 0 ? "+" : "") +
-    "$" + (demoBalance-startingBalance).toFixed(2);
+const coins=[
+ {s:"BTC",name:"Bitcoin",icon:"₿",price:67250,change:-1.09,vol:"$1.02B"},
+ {s:"ETH",name:"Ethereum",icon:"◆",price:3420.80,change:-.27,vol:"$694.3M"},
+ {s:"NEAR",name:"NEAR Protocol",icon:"N",price:5.38,change:-3.72,vol:"$215.4M"},
+ {s:"SOL",name:"Solana",icon:"◎",price:145.20,change:-2.39,vol:"$192.0M"},
+ {s:"XRP",name:"XRP",icon:"✕",price:0.58,change:-2.68,vol:"$112.4M"},
+ {s:"BNB",name:"BNB",icon:"◆",price:573.80,change:-1.01,vol:"$73.4M"},
+ {s:"DOGE",name:"Dogecoin",icon:"Ð",price:0.1652,change:-1.91,vol:"$46.8M"},
+ {s:"AVAX",name:"Avalanche",icon:"▲",price:36.76,change:-1.72,vol:"$38.6M"},
+ {s:"ADA",name:"Cardano",icon:"A",price:0.445,change:1.26,vol:"$31.8M"},
+ {s:"LINK",name:"Chainlink",icon:"⬡",price:14.62,change:2.14,vol:"$29.7M"}
+];
+let activeFilter="All",favorites=new Set(["BTC","ETH"]),pair="BTC",side="buy";
+let cash=10000,pnl=0,orders=[];
+const $=id=>document.getElementById(id);
+function money(n){return "$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function price(n){return n<1?"$"+n.toFixed(4):"$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function showPage(id){
+ document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===id));
+ document.querySelectorAll(".nav").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
+ window.scrollTo(0,0);
+ if(id==="trade")drawTrade();
 }
-document.getElementById("currency").addEventListener("change", updateBalance);
-
-function openAction(action) {
-  selectedAction = action;
-  title.textContent = action;
-  fields.innerHTML = "";
-  confirmButton.style.display = "block";
-  confirmButton.textContent = "Try demo";
-
-  if (action === "Trade" || action === "Start trading") {
-    message.textContent = "Practice a simulated buy or sell using fictional funds. No real crypto is traded.";
-    fields.innerHTML = `
-      <label for="tradeSide">Action</label>
-      <select id="tradeSide"><option value="buy">Simulate buying BTC</option><option value="sell">Simulate selling BTC</option></select>
-      <label for="tradeAmount">Fictional amount (USD)</label>
-      <input id="tradeAmount" type="number" min="1" max="10000" value="100" inputmode="decimal">
-    `;
-  } else if (action === "History") {
-    message.textContent = "Demo history: Your starting practice balance is $10,000.00. No real transactions have taken place.";
-    confirmButton.style.display = "none";
-  } else if (action === "Markets") {
-    message.textContent = "Demo markets show illustrative BTC, ETH, SOL and XRP prices on this page. They are not live prices.";
-    confirmButton.style.display = "none";
-  } else if (action === "Support") {
-    message.textContent = "This is a demo interface, not a real financial service. Do not share passwords, recovery phrases or wallet private keys.";
-    confirmButton.style.display = "none";
-  } else if (action === "Home") {
-    message.textContent = "You are viewing the CryptoBigot demo home dashboard.";
-    confirmButton.style.display = "none";
-  } else {
-    message.textContent = action + " is shown for interface demonstration only. Real deposits, withdrawals, transfers, wallet connections and identity verification are not enabled.";
-    confirmButton.style.display = "none";
-  }
-  backdrop.classList.add("open");
+document.querySelectorAll("[data-page]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.page)));
+function coinRow(c){
+ return `<div class="market-row">
+ <div class="coin"><button class="star ${favorites.has(c.s)?"on":""}" data-star="${c.s}" aria-label="Toggle favorite">${favorites.has(c.s)?"★":"☆"}</button><div class="coin-icon">${c.icon}</div><div><div class="coin-name">${c.s}</div><div class="coin-pair">${c.name}</div></div></div>
+ <div class="price">${price(c.price)}</div>
+ <div class="change ${c.change>=0?"up":"down"}">${c.change>0?"+":""}${c.change.toFixed(2)}%</div>
+ <button class="trade-small" data-trade="${c.s}">Trade</button></div>`;
 }
-document.querySelectorAll("[data-action]").forEach(button => {
-  button.addEventListener("click", () => openAction(button.dataset.action));
+function renderMarkets(){
+ const query=$("search").value.trim().toLowerCase();
+ let list=coins.filter(c=>(c.s+" "+c.name).toLowerCase().includes(query));
+ if(activeFilter==="Watchlist")list=list.filter(c=>favorites.has(c.s));
+ if(activeFilter==="Gainers")list=list.filter(c=>c.change>0);
+ if(activeFilter==="Losers")list=list.filter(c=>c.change<0);
+ $("marketRows").innerHTML=list.length?list.map(coinRow).join(""):'<div class="empty">No matching coins found.</div>';
+ $("marketRows").querySelectorAll("[data-star]").forEach(b=>b.addEventListener("click",()=>{
+  const s=b.dataset.star;favorites.has(s)?favorites.delete(s):favorites.add(s);renderMarkets();
+ }));
+ $("marketRows").querySelectorAll("[data-trade]").forEach(b=>b.addEventListener("click",()=>{
+  pair=b.dataset.trade;$("pairSelect").value=pair;showPage("trade");
+ }));
+}
+$("search").addEventListener("input",renderMarkets);
+document.querySelectorAll("[data-filter]").forEach(b=>b.addEventListener("click",()=>{
+ activeFilter=b.dataset.filter;
+ document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x===b));
+ renderMarkets();
+}));
+function drawChart(){
+ const c=coins.find(x=>x.s===pair)||coins[0];
+ $("chartPair").textContent=pair+" / USDT";
+ $("chartPrice").textContent=price(c.price);
+ $("midPrice").textContent=price(c.price);
+ let seed=pair.split("").reduce((a,ch)=>a+ch.charCodeAt(0),0);
+ let candles="",grid="";
+ for(let y=30;y<300;y+=45)grid+=`<line x1="0" y1="${y}" x2="620" y2="${y}" stroke="#242c3d" stroke-dasharray="3 5"/>`;
+ for(let x=20;x<620;x+=50)grid+=`<line x1="${x}" y1="0" x2="${x}" y2="300" stroke="#20283a" stroke-dasharray="3 5"/>`;
+ let previous=145;
+ for(let i=0;i<42;i++){
+  seed=(seed*9301+49297)%233280;
+  const open=previous,close=Math.max(45,Math.min(250,open+(seed/233280-.49)*43));
+  const high=Math.min(270,Math.max(open,close)+8+(seed%16));
+  const low=Math.max(30,Math.min(open,close)-7-(seed%13));
+  const x=12+i*14.3,color=close>=open?"#20c997":"#ef5c70";
+  candles+=`<line x1="${x+4}" y1="${high}" x2="${x+4}" y2="${low}" stroke="${color}" stroke-width="1.5"/><rect x="${x}" y="${Math.min(open,close)}" width="8" height="${Math.max(3,Math.abs(close-open))}" fill="${color}"/>`;
+  previous=close;
+ }
+ $("candleChart").innerHTML=grid+candles+`<text x="10" y="290" fill="#8993a9" font-size="11">Illustrative ${$("intervalLabel")?.textContent||"candles"}</text>`;
+ const asks=[1.0003,1.0002,1.0001],bids=[.9999,.9998,.9997];
+ $("asks").innerHTML=asks.map((m,i)=>`<div class="book-row"><span class="red">${price(c.price*m)}</span><span>${(0.12+i*.27).toFixed(4)}</span></div>`).join("");
+ $("bids").innerHTML=bids.map((m,i)=>`<div class="book-row"><span class="green">${price(c.price*m)}</span><span>${(0.09+i*.31).toFixed(4)}</span></div>`).join("");
+}
+function drawTrade(){drawChart();$("cashAvailable").textContent=money(cash)}
+$("pairSelect").addEventListener("change",()=>{pair=$("pairSelect").value;drawTrade()});
+document.querySelectorAll("[data-interval]").forEach(b=>b.addEventListener("click",()=>{
+ document.querySelectorAll("[data-interval]").forEach(x=>x.classList.toggle("active",x===b));
+ drawChart();
+}));
+$("buyTab").addEventListener("click",()=>setSide("buy"));
+$("sellTab").addEventListener("click",()=>setSide("sell"));
+function setSide(s){
+ side=s;$("buyTab").className="btn "+(s==="buy"?"btn-green":"");
+ $("sellTab").className="btn "+(s==="sell"?"btn-red":"");
+ $("placeOrder").className="btn "+(s==="buy"?"btn-green":"btn-red");
+ $("placeOrder").textContent="Simulate "+(s==="buy"?"Buy":"Sell");
+}
+$("placeOrder").addEventListener("click",()=>{
+ const amount=Number($("orderAmount").value),c=coins.find(x=>x.s===pair);
+ if(!Number.isFinite(amount)||amount<1||amount>10000){$("orderMessage").textContent="Enter an amount from $1 to $10,000.";return}
+ if(side==="buy"&&amount>cash){$("orderMessage").textContent="Insufficient demo cash for this simulated order.";return}
+ if(side==="buy")cash-=amount;else cash+=amount;
+ pnl+=side==="buy"?0:0;
+ const order={pair,side,amount,time:new Date().toLocaleString()};
+ orders.unshift(order);
+ $("orderMessage").textContent=`Simulated ${side} order for ${money(amount)} completed in demo mode. No real trade was placed.`;
+ updateAccount();renderHistory();drawTrade();
 });
-document.getElementById("closeModal").addEventListener("click", () => {
-  backdrop.classList.remove("open");
-});
-backdrop.addEventListener("click", event => {
-  if (event.target === backdrop) backdrop.classList.remove("open");
-});
-confirmButton.addEventListener("click", () => {
-  if (selectedAction !== "Trade" && selectedAction !== "Start trading") return;
-  const side = document.getElementById("tradeSide").value;
-  const amount = Number(document.getElementById("tradeAmount").value);
-  if (!Number.isFinite(amount) || amount <= 0 || amount > 10000) {
-    message.textContent = "Enter a fictional amount between $1 and $10,000.";
-    return;
-  }
-  if (side === "buy" && amount > demoBalance) {
-    message.textContent = "Your fictional demo balance is too low for that practice amount.";
-    return;
-  }
-  if (side === "buy") demoBalance -= amount;
-  else demoBalance += amount;
-  updateBalance();
-  message.textContent = "Practice action complete: simulated " + side + " for $" +
-    amount.toFixed(2) + ". No real order or blockchain transaction occurred.";
-  fields.innerHTML = "";
-  confirmButton.style.display = "none";
-});
-updateBalance();
+function updateAccount(){
+ $("balance").textContent=money(cash);
+ $("portfolio").textContent=money(cash);
+ $("walletBalance").textContent=money(cash);
+ $("cashWallet").innerHTML=money(cash)+"<small>Practice cash</small>";
+ $("cashAvailable").textContent=money(cash);
+ $("pnl").textContent=(pnl>=0?"+":"")+money(pnl);
+ $("assetCount").textContent="4";
+}
+function renderHistory(){
+ if(!orders.length){
+  $("orderHistory").innerHTML="No simulated orders yet.";
+  $("walletHistory").innerHTML="No demo orders have been placed.";
+  return;
+ }
+ const html=orders.map(o=>`<div class="wallet-row"><div class="coin-icon">${o.side==="buy"?"↙":"↗"}</div><div class="wallet-info"><b>${o.side.toUpperCase()} ${o.pair}/USDT</b><div class="muted small">${o.time} · Simulated</div></div><div class="wallet-value">${money(o.amount)}<small>Demo order</small></div></div>`).join("");
+ $("orderHistory").innerHTML=html;$("walletHistory").innerHTML=html;
+}
+function renderTop(){
+ $("topMovers").innerHTML=coins.slice(0,4).map(c=>`<div class="wallet-row"><div class="coin-icon">${c.icon}</div><div class="wallet-info"><b>${c.s}</b><div class="muted small">${c.name}</div></div><div class="wallet-value">${price(c.price)}<small class="${c.change>=0?"green":"red"}">${c.change>0?"+":""}${c.change.toFixed(2)}%</small></div></div>`).join("");
+}
+$("helpButton").addEventListener("click",()=>{$("helpText").textContent="This site is a visual trading demo. It does not accept real deposits, connect wallets, or send cryptocurrency."});
+$("modalClose").addEventListener("click",()=>$("modal").classList.remove("show"));
+function showNotice(title,text){$("modalTitle").textContent=title;$("modalText").textContent=text;$("modal").classList.add("show")}
+renderMarkets();renderTop();drawTrade();updateAccount();renderHistory();setSide("buy");
 </script>
 </body>
 </html>
+
 
