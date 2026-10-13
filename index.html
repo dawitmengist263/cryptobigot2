@@ -44,6 +44,13 @@ select.pair{appearance:auto;color:white}
 .tools button{padding:9px 11px;background:transparent;color:#aeb6ca;border:0;border-radius:8px}
 .tools button.active{background:#353b4c;color:white}
 .chart{height:300px;width:100%;display:block}
+.signal-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+.signal-stat{background:var(--panel2);border:1px solid var(--border);border-radius:11px;padding:12px;min-width:0}
+.signal-label{font-size:11px;color:var(--muted);margin-bottom:8px}
+.signal-value{font-size:15px;font-weight:bold;overflow-wrap:anywhere}
+.signal-buy{color:var(--green)}.signal-sell{color:var(--red)}.signal-neutral{color:#f0c96b}
+.signal-pill{display:inline-block;padding:7px 10px;border-radius:8px;background:#22283a;font-weight:bold}
+@media(max-width:600px){.signal-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .pricebox{text-align:center;padding:25px 12px}
 .pricebox h2{font-size:clamp(30px,6vw,45px);color:var(--green);margin:12px 0}
 .pill{font-size:11px;color:var(--green);background:#15332f;border-radius:7px;padding:6px 9px}
@@ -178,6 +185,17 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
   <canvas id="chart" class="chart"></canvas>
   <p class="small muted">Live reference price · Illustrative chart and order book · Demo orders only</p>
  </div>
+ <div class="card" id="signalPanel">
+  <h3>Live Market Signals <span class="pill" id="signalStatus">CONNECTING</span></h3>
+  <p class="small muted" id="signalSummary">Loading recent market candles to calculate technical indicators…</p>
+  <div class="signal-grid">
+   <div class="signal-stat"><div class="signal-label">Overall signal</div><div class="signal-value signal-neutral" id="signalOverall">WAIT</div></div>
+   <div class="signal-stat"><div class="signal-label">RSI (14)</div><div class="signal-value" id="signalRsi">—</div></div>
+   <div class="signal-stat"><div class="signal-label">EMA trend (9/21)</div><div class="signal-value" id="signalEma">—</div></div>
+   <div class="signal-stat"><div class="signal-label">Last candle</div><div class="signal-value" id="signalCandle">—</div></div>
+  </div>
+  <p class="small muted">Signals are calculated from recent public Binance candles using RSI (14) and EMA (9/21). They are informational, can be wrong, and are not financial advice. Orders on this site remain simulated.</p>
+ </div>
 
  <div class="card pricebox">
   <div class="muted" id="pricePair">BTC/USDT</div>
@@ -299,7 +317,7 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
 "use strict";
 const $=id=>document.getElementById(id);
 const prices={BTC:82898.35,XRP:1.3798};
-let symbol="BTC",balance=10000,candles=[],tick=0,candleMode=true;
+let symbol="BTC",balance=10000,candles=[],tick=0,candleMode=true,chartInterval="15m",signalTimer=null;
 let activity=[];
 
 function money(n){
@@ -392,6 +410,7 @@ function setSymbol(s){
  candles=[];
  for(let i=0;i<45;i++)candles.push(prices[s]*(1+(Math.random()-.5)*.015));
  render();draw();
+ refreshSignals();
 }
 function updatePairSelector(){
  const pairs=liveMarkets.filter(m=>m.quote==="USDT").sort((a,b)=>a.base.localeCompare(b.base));
@@ -413,6 +432,67 @@ function updatePairSelector(){
  }
 }
 $("pairSelect").addEventListener("change",()=>setSymbol($("pairSelect").value));
+
+function ema(values,period){
+ if(values.length<period)return null;
+ const k=2/(period+1);
+ let value=values.slice(0,period).reduce((a,b)=>a+b,0)/period;
+ for(let i=period;i<values.length;i++)value=values[i]*k+value*(1-k);
+ return value;
+}
+function rsi(values,period=14){
+ if(values.length<=period)return null;
+ let gain=0,loss=0;
+ for(let i=1;i<=period;i++){const d=values[i]-values[i-1];if(d>=0)gain+=d;else loss-=d;}
+ gain/=period;loss/=period;
+ for(let i=period+1;i<values.length;i++){
+  const d=values[i]-values[i-1];gain=(gain*(period-1)+Math.max(d,0))/period;loss=(loss*(period-1)+Math.max(-d,0))/period;
+ }
+ if(loss===0)return 100;
+ return 100-(100/(1+gain/loss));
+}
+function signalText(id,textValue,kind){
+ const el=$(id);el.textContent=textValue;
+ el.classList.remove("signal-buy","signal-sell","signal-neutral");
+ if(kind)el.classList.add(kind);
+}
+async function refreshSignals(){
+ const status=$("signalStatus"),summary=$("signalSummary");
+ if(!status||!summary)return;
+ status.textContent="UPDATING";
+ try{
+  const pair=symbol+"USDT";
+  const url="https://api.binance.com/api/v3/klines?symbol="+encodeURIComponent(pair)+"&interval="+encodeURIComponent(chartInterval)+"&limit=100";
+  const response=await fetch(url,{cache:"no-store"});
+  if(!response.ok)throw new Error("Market candle request failed ("+response.status+")");
+  const rows=await response.json();
+  const closes=rows.map(row=>Number(row[4])).filter(n=>Number.isFinite(n)&&n>0);
+  if(closes.length<22)throw new Error("Not enough recent candles for indicators.");
+  const fast=ema(closes,9),slow=ema(closes,21),strength=rsi(closes,14);
+  const last=closes[closes.length-1],previous=closes[closes.length-2];
+  let label="NEUTRAL",kind="signal-neutral",detail="Indicators are mixed; wait for clearer confirmation.";
+  if(fast>slow&&strength>=50&&strength<70){label="BUY BIAS";kind="signal-buy";detail="EMA 9 is above EMA 21 and RSI supports upward momentum.";}
+  else if(fast<slow&&strength<=50&&strength>30){label="SELL BIAS";kind="signal-sell";detail="EMA 9 is below EMA 21 and RSI supports downward momentum.";}
+  else if(strength>=70){label="OVERBOUGHT";kind="signal-neutral";detail="RSI is elevated; upward momentum may be stretched.";}
+  else if(strength<=30){label="OVERSOLD";kind="signal-neutral";detail="RSI is low; the market may be stretched downward.";}
+  signalText("signalOverall",label,kind);
+  signalText("signalRsi",strength.toFixed(1),strength>=70?"signal-sell":strength<=30?"signal-buy":"");
+  signalText("signalEma",fast>slow?"Bullish":fast<slow?"Bearish":"Flat",fast>slow?"signal-buy":fast<slow?"signal-sell":"signal-neutral");
+  signalText("signalCandle",last>=previous?"Up":"Down",last>=previous?"signal-buy":"signal-sell");
+  summary.textContent=pair+" · "+chartInterval+" · "+detail+" Updated "+new Date().toLocaleTimeString()+".";
+  status.textContent="LIVE";
+  status.style.color="#20c997";
+  prices[symbol]=last;
+  candles=closes.slice(-45);
+  $("pricePair").textContent=symbol+"/USDT";
+  $("pairSelect").value=symbol;
+  if(!$("app").classList.contains("hidden")){render();draw();}
+ }catch(error){
+  status.textContent="UNAVAILABLE";
+  status.style.color="#f34c62";
+  summary.textContent="Could not load live signals for "+symbol+"/USDT. Check network access and try again. "+error.message;
+ }
+}
 // Live public market data for all available USDT spot pairs.
 const marketNames={BTC:"Bitcoin",ETH:"Ethereum",USDT:"Tether",BNB:"BNB",XRP:"XRP",USDC:"USD Coin",SOL:"Solana",TRX:"TRON",DOGE:"Dogecoin",ADA:"Cardano",BCH:"Bitcoin Cash",AVAX:"Avalanche",LINK:"Chainlink",TON:"Toncoin",SHIB:"Shiba Inu",DOT:"Polkadot",SUI:"Sui",LTC:"Litecoin",NEAR:"NEAR Protocol",UNI:"Uniswap",APT:"Aptos",ETC:"Ethereum Classic",ATOM:"Cosmos",XLM:"Stellar",FIL:"Filecoin",ICP:"Internet Computer",HBAR:"Hedera",ARB:"Arbitrum",OP:"Optimism",PEPE:"Pepe",WIF:"dogwifhat",AAVE:"Aave",ALGO:"Algorand",VET:"VeChain",FTM:"Fantom",INJ:"Injective",RENDER:"Render",MKR:"Maker",EOS:"EOS",THETA:"Theta Network"};
 let liveMarkets=[],marketView="all",marketTimer=null;
@@ -508,9 +588,13 @@ $("marketRows").addEventListener("click",e=>{
 });
 refreshMarkets();
 marketTimer=setInterval(refreshMarkets,30000);
+if(signalTimer)clearInterval(signalTimer);
+signalTimer=setInterval(refreshSignals,60000);
 document.querySelectorAll("[data-interval]").forEach(b=>b.onclick=()=>{
  document.querySelectorAll("[data-interval]").forEach(x=>x.classList.remove("active"));
- b.classList.add("active");draw();
+ b.classList.add("active");
+ chartInterval=b.dataset.interval;
+ refreshSignals();
 });
 $("chartMode").onclick=()=>{
  candleMode=!candleMode;$("chartMode").textContent=candleMode?"Candles":"Line";draw();
