@@ -34,9 +34,9 @@ main{max-width:1050px;margin:auto;padding:20px 14px 105px}
  padding:16px;margin-bottom:17px}
 .muted{color:var(--muted)}
 .small{font-size:12px;line-height:1.7}
-.pair{display:flex;align-items:center;justify-content:space-between;width:100%;
- background:var(--panel2);color:white;border:1px solid var(--border);
- border-radius:12px;padding:13px;font-weight:bold}
+.pair{display:block;width:100%;background:var(--panel2);color:white;border:1px solid var(--border);
+ border-radius:12px;padding:13px;font-weight:bold;cursor:pointer}
+select.pair{appearance:auto;color:white}
 .coin{display:inline-grid;place-items:center;width:32px;height:32px;
  border-radius:50%;background:#f7931a;color:white;margin-right:9px}
 .coin.xrp{background:#313647}
@@ -164,10 +164,10 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
 <main>
 <section id="homePage">
  <div class="card">
-  <button class="pair" id="pairButton">
-   <span><span class="coin" id="coinIcon">₿</span><span id="pairName">BTC/USDT</span></span>
-   <span>⌄</span>
-  </button>
+  <label class="small muted" for="pairSelect">Select any available USDT market</label>
+  <select class="pair" id="pairSelect" aria-label="Select trading pair">
+   <option value="BTC">₿ BTC/USDT</option><option value="XRP">✕ XRP/USDT</option>
+  </select>
   <div class="tools">
    <button data-interval="1m">1m</button>
    <button data-interval="30m">30m</button>
@@ -379,16 +379,40 @@ $("noticeBtn").onclick=()=>toast("No demo notifications.");
 ["logoutBtn","walletLogout","settingsLogout"].forEach(id=>$(id).onclick=logout);
 
 function setSymbol(s){
+ if(!Number.isFinite(prices[s])||prices[s]<=0){
+  const market=liveMarkets.find(m=>m.base===s&&m.quote==="USDT");
+  if(market)prices[s]=market.price;
+ }
+ if(!Number.isFinite(prices[s])||prices[s]<=0){toast("Price is not available for "+s+"/USDT yet.");return;}
  symbol=s;
- $("pairName").textContent=s+"/USDT";
  $("pricePair").textContent=s+"/USDT";
- $("coinIcon").textContent=s==="BTC"?"₿":"✕";
+ $("coinIcon").textContent=({BTC:"₿",ETH:"◆",BNB:"◆",XRP:"✕",SOL:"◎",DOGE:"Ð",ADA:"✺",TRX:"△",LTC:"Ł",BCH:"₿"})[s]||s.slice(0,1);
  $("coinIcon").classList.toggle("xrp",s==="XRP");
+ $("pairSelect").value=s;
  candles=[];
  for(let i=0;i<45;i++)candles.push(prices[s]*(1+(Math.random()-.5)*.015));
  render();draw();
 }
-$("pairButton").onclick=()=>setSymbol(symbol==="BTC"?"XRP":"BTC");
+function updatePairSelector(){
+ const pairs=liveMarkets.filter(m=>m.quote==="USDT").sort((a,b)=>a.base.localeCompare(b.base));
+ const select=$("pairSelect"),previous=symbol;
+ select.innerHTML="";
+ pairs.forEach(m=>{
+  const option=document.createElement("option");
+  option.value=m.base;
+  option.textContent=(m.base==="BTC"?"₿ ":m.base==="XRP"?"✕ ":"")+m.base+" / USDT";
+  select.appendChild(option);
+ });
+ if(!pairs.some(m=>m.base===previous)){
+  const fallback=pairs.find(m=>m.base==="BTC")||pairs[0];
+  if(fallback)symbol=fallback.base;
+ }
+ if(pairs.length){
+  select.value=symbol;
+  if(!select.value){select.value=pairs[0].base;symbol=pairs[0].base;}
+ }
+}
+$("pairSelect").addEventListener("change",()=>setSymbol($("pairSelect").value));
 // Live public market data for all available USDT spot pairs.
 const marketNames={BTC:"Bitcoin",ETH:"Ethereum",USDT:"Tether",BNB:"BNB",XRP:"XRP",USDC:"USD Coin",SOL:"Solana",TRX:"TRON",DOGE:"Dogecoin",ADA:"Cardano",BCH:"Bitcoin Cash",AVAX:"Avalanche",LINK:"Chainlink",TON:"Toncoin",SHIB:"Shiba Inu",DOT:"Polkadot",SUI:"Sui",LTC:"Litecoin",NEAR:"NEAR Protocol",UNI:"Uniswap",APT:"Aptos",ETC:"Ethereum Classic",ATOM:"Cosmos",XLM:"Stellar",FIL:"Filecoin",ICP:"Internet Computer",HBAR:"Hedera",ARB:"Arbitrum",OP:"Optimism",PEPE:"Pepe",WIF:"dogwifhat",AAVE:"Aave",ALGO:"Algorand",VET:"VeChain",FTM:"Fantom",INJ:"Injective",RENDER:"Render",MKR:"Maker",EOS:"EOS",THETA:"Theta Network"};
 let liveMarkets=[],marketView="all",marketTimer=null;
@@ -437,7 +461,17 @@ async function refreshMarkets(){
   });
   if(prices[symbol]){if(candles.length)candles[candles.length-1]=prices[symbol];}
   $("marketFeedStatus").textContent="Live market feed · "+new Date().toLocaleTimeString();
+  updatePairSelector();
+  if(!prices[symbol]&&prices.BTC)symbol="BTC";
   renderMarkets();
+  if(!liveMarkets.some(m=>m.base===symbol&&m.quote==="USDT")&&liveMarkets.length){
+   const first=liveMarkets.find(m=>m.quote==="USDT");
+   if(first){symbol=first.base;setSymbol(symbol);}
+  }else if(prices[symbol]){
+   $("pricePair").textContent=symbol+"/USDT";
+   $("pairSelect").value=symbol;
+   if(candles.length)candles[candles.length-1]=prices[symbol];
+  }
   if(!$("app").classList.contains("hidden")){render();if(!$("homePage").classList.contains("hidden"))draw();}
  }catch(error){
   $("marketFeedStatus").textContent="Live feed unavailable — check connection or regional API access";
@@ -465,9 +499,10 @@ $("marketRows").addEventListener("click",e=>{
   const m=liveMarkets.find(x=>x.symbol===pair);
   if(m&&m.quote==="USDT"){
    prices[m.base]=m.price;setSymbol(m.base);go("home");
+   $("pairSelect").value=m.base;
    toast(pair+" selected. Orders on this site remain simulated.");
   }else{
-   toast(pair+" is listed in live markets; the demo order screen currently supports USDT-quoted BTC and XRP only.");
+   toast(pair+" is listed in live markets; select a USDT-quoted pair to use this practice order screen.");
   }
  }
 });
@@ -557,7 +592,7 @@ window.addEventListener("resize",draw);
 
 setInterval(()=>{
  tick++;
- for(const s of ["BTC","XRP"])prices[s]*=1+(Math.random()-.5)*.0008;
+ if(!liveMarkets.length){for(const s of ["BTC","XRP"])prices[s]*=1+(Math.random()-.5)*.0008;}
  if(candles.length)candles.push(current());
  if(candles.length>45)candles.shift();
  if(!$("app").classList.contains("hidden")){
