@@ -99,7 +99,7 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
 .market-feed{display:flex;align-items:center;gap:8px;padding:10px 15px;color:var(--muted);font-size:12px}
 .feed-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0}
 .market-refresh{margin-left:auto;padding:7px 10px;font-size:12px}
-.market-table-wrap{overflow:auto}
+.market-table tbody tr.market-row-selectable{cursor:pointer;transition:background .15s ease}.market-table tbody tr.market-row-selectable:hover,.market-table tbody tr.market-row-selectable:focus-within{background:rgba(124,92,255,.10)}.market-table tbody tr.market-row-selectable:active{background:rgba(124,92,255,.18)}.market-table-wrap{overflow:auto}
 .market-table{min-width:690px}
 .market-table th{font-size:11px;white-space:nowrap}
 .market-table td{white-space:nowrap}
@@ -519,7 +519,7 @@ function renderMarkets(){
   const palette=["#7c5cff","#ec4899","#06b6d4","#84cc16","#f97316","#a855f7","#14b8a6","#eab308","#3b82f6","#f43f5e","#10b981","#8b5cf6"];
   let hash=0;for(let i=0;i<m.base.length;i++)hash=(hash*31+m.base.charCodeAt(i))>>>0;
   const coinColor=coinColors[m.base]||palette[hash%palette.length];
-  return '<tr><td><div class="market-coin"><button class="market-star '+(fav?"on":"")+'" data-market-star="'+m.symbol+'" aria-label="Toggle watchlist">'+(fav?"★":"☆")+'</button><div class="market-avatar" style="background:'+coinColor+';color:#fff;box-shadow:0 0 0 2px #111522,0 0 12px '+coinColor+'55">'+mark+'</div><div><div class="market-name">'+m.base+' / '+m.quote+'</div><div class="market-symbol">'+m.name+' · '+m.symbol+'</div></div></div></td><td><strong>'+marketMoney(m.price)+' '+m.quote+'</strong></td><td><span class="market-change '+(up?"up":"down")+'">'+(up?"+":"")+m.change.toFixed(2)+'%</span></td><td>'+marketVolume(m.volume)+' '+m.quote+'</td><td><button class="market-trade" data-market-trade="'+m.symbol+'">Select</button></td></tr>';
+  return '<tr class="market-row-selectable" data-market-row="'+m.symbol+'" tabindex="0" aria-label="Select '+m.base+' / '+m.quote+'"><td><div class="market-coin"><button class="market-star '+(fav?"on":"")+'" data-market-star="'+m.symbol+'" aria-label="Toggle watchlist">'+(fav?"★":"☆")+'</button><div class="market-avatar" style="background:'+coinColor+';color:#fff;box-shadow:0 0 0 2px #111522,0 0 12px '+coinColor+'55">'+mark+'</div><div><div class="market-name">'+m.base+' / '+m.quote+'</div><div class="market-symbol">'+m.name+' · '+m.symbol+'</div></div></div></td><td><strong>'+marketMoney(m.price)+' '+m.quote+'</strong></td><td><span class="market-change '+(up?"up":"down")+'">'+(up?"+":"")+m.change.toFixed(2)+'%</span></td><td>'+marketVolume(m.volume)+' '+m.quote+'</td><td><button class="market-trade" data-market-trade="'+m.symbol+'">Select</button></td></tr>';
  }).join("");
 }
 async function refreshMarkets(){
@@ -565,26 +565,37 @@ document.querySelectorAll("[data-market-view]").forEach(b=>b.onclick=()=>{
 });
 $("marketSearch").addEventListener("input",renderMarkets);
 $("marketRefresh").onclick=refreshMarkets;
+function selectMarketPair(pair){
+ const market=liveMarkets.find(x=>x.symbol===pair);
+ if(!market){toast("This market is no longer available. Refresh the market list and try again.");return;}
+ let target=market;
+ if(market.quote!=="USDT"){
+  target=liveMarkets.find(x=>x.base===market.base&&x.quote==="USDT");
+  if(!target){toast(pair+" is visible, but "+market.base+"/USDT is not available for the practice chart.");return;}
+ }
+ prices[target.base]=target.price;
+ setSymbol(target.base);
+ go("home");
+ $("pairSelect").value=target.base;
+ toast(market.symbol+" selected. Chart uses "+target.base+"/USDT for practice trading; orders remain simulated.");
+}
 $("marketRows").addEventListener("click",e=>{
  const star=e.target.closest("[data-market-star]");
  if(star){
+  e.stopPropagation();
   const s=star.dataset.marketStar;
   marketWatchlist.has(s)?marketWatchlist.delete(s):marketWatchlist.add(s);
   try{localStorage.setItem("cb_market_watchlist",JSON.stringify([...marketWatchlist]));}catch(err){}
   renderMarkets();return;
  }
  const trade=e.target.closest("[data-market-trade]");
- if(trade){
-  const pair=trade.dataset.marketTrade;
-  const m=liveMarkets.find(x=>x.symbol===pair);
-  if(m&&m.quote==="USDT"){
-   prices[m.base]=m.price;setSymbol(m.base);go("home");
-   $("pairSelect").value=m.base;
-   toast(pair+" selected. Orders on this site remain simulated.");
-  }else{
-   toast(pair+" is listed in live markets; select a USDT-quoted pair to use this practice order screen.");
-  }
- }
+ const row=e.target.closest("[data-market-row]");
+ if(trade||row)selectMarketPair(trade?trade.dataset.marketTrade:row.dataset.marketRow);
+});
+$("marketRows").addEventListener("keydown",e=>{
+ if(e.target.closest("[data-market-star]"))return;
+ const row=e.target.closest("[data-market-row]");
+ if(row&&(e.key==="Enter"||e.key===" ")){e.preventDefault();selectMarketPair(row.dataset.marketRow);}
 });
 refreshMarkets();
 marketTimer=setInterval(refreshMarkets,30000);
