@@ -1,2 +1,2 @@
 # cryptobigot2
-My cryptocurrency trading 
+My cryptocurrency trading demo
