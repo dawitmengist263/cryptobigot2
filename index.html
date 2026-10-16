@@ -214,7 +214,7 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
  </div>
 
  <div class="card">
-  <h3>Order Book <span class="pill">DEMO</span></h3>
+  <h3>Live Order Book <span class="pill" id="bookStatus">CONNECTING</span></h3>
   <table><thead><tr><th>PRICE (USDT)</th><th>QTY</th><th>TOTAL</th></tr></thead>
   <tbody id="book"></tbody></table>
  </div>
@@ -378,7 +378,7 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
 "use strict";
 const $=id=>document.getElementById(id);
 const prices={BTC:82898.35,XRP:1.3798};
-let symbol="BTC",balance=10000,candles=[],tick=0,candleMode=true,chartInterval="15m",signalTimer=null;
+let symbol="BTC",balance=10000,candles=[],tick=0,candleMode=true,chartInterval="15m",signalTimer=null,liveBook=null;
 let activity=[];
 
 function money(n){
@@ -468,6 +468,7 @@ function setSymbol(s){
  }
  if(!Number.isFinite(prices[s])||prices[s]<=0){toast("Price is not available for "+s+"/USDT yet.");return;}
  symbol=s;
+ liveBook=null;refreshOrderBook();
  $("pricePair").textContent=s+"/USDT";
  $("coinIcon").textContent=({BTC:"₿",ETH:"◆",BNB:"◆",XRP:"✕",SOL:"◎",DOGE:"Ð",ADA:"✺",TRX:"△",LTC:"Ł",BCH:"₿"})[s]||s.slice(0,1);
  $("coinIcon").classList.toggle("xrp",s==="XRP");
@@ -671,6 +672,7 @@ $("marketRows").addEventListener("keydown",e=>{
 });
 refreshMarkets();
 marketTimer=setInterval(refreshMarkets,30000);
+setInterval(()=>{if(!$("app").classList.contains("hidden"))refreshOrderBook();},10000);
 if(signalTimer)clearInterval(signalTimer);
 signalTimer=setInterval(refreshSignals,60000);
 document.querySelectorAll("[data-interval]").forEach(b=>b.onclick=()=>{
@@ -698,15 +700,18 @@ function draw(){
 }
 
 function renderBook(){
- const p=current();$("book").innerHTML="";
- for(let i=5;i>=1;i--){
-  const v=p*(1+i*.00012),q=Math.random()*1.8+.01;
-  $("book").innerHTML+=`<tr><td class="red">${money(v)}</td><td>${q.toFixed(4)}</td><td>${money(v*q)}</td></tr>`;
- }
- for(let i=1;i<=7;i++){
-  const v=p*(1-i*.00012),q=Math.random()*1.8+.01;
-  $("book").innerHTML+=`<tr><td class="green">${money(v)}</td><td>${q.toFixed(4)}</td><td>${money(v*q)}</td></tr>`;
- }
+ const body=$("book");body.innerHTML="";
+ if(!liveBook){body.innerHTML='<tr><td colspan="3" class="muted">Loading live order book…</td></tr>';return;}
+ liveBook.asks.slice(0,5).reverse().forEach(level=>{const p=Number(level[0]),q=Number(level[1]);body.innerHTML+='<tr><td class="red">'+p.toLocaleString("en-US",{maximumFractionDigits:8})+'</td><td>'+q.toFixed(5)+'</td><td>'+money(p*q)+'</td></tr>';});
+ liveBook.bids.slice(0,7).forEach(level=>{const p=Number(level[0]),q=Number(level[1]);body.innerHTML+='<tr><td class="green">'+p.toLocaleString("en-US",{maximumFractionDigits:8})+'</td><td>'+q.toFixed(5)+'</td><td>'+money(p*q)+'</td></tr>';});
+}
+async function refreshOrderBook(){
+ try{
+  const response=await fetch("https://api.binance.com/api/v3/depth?symbol="+encodeURIComponent(symbol+"USDT")+"&limit=10",{cache:"no-store"});
+  if(!response.ok)throw new Error("Order book unavailable");
+  const data=await response.json();liveBook={asks:data.asks||[],bids:data.bids||[]};
+  $("bookStatus").textContent="LIVE";$("bookStatus").style.color="#20c997";renderBook();
+ }catch(e){$("bookStatus").textContent="UNAVAILABLE";if(!liveBook)$("book").innerHTML='<tr><td colspan="3" class="muted">Live order book is unavailable on this connection.</td></tr>';}
 }
 function render(){
  $("mainPrice").textContent="$"+money(current());$("balance").textContent="$"+money(balance);$("walletBalance").textContent="$"+money(balance);
