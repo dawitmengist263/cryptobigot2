@@ -49,7 +49,9 @@ main{max-width:1050px;margin:auto;padding:20px 14px 105px}
 .trade-modal input,.trade-modal select{width:100%;padding:13px;background:#171f31;color:#fff;border:1px solid #2b3449;border-radius:10px}
 .trade-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:9px}
 .trade-presets button,.trade-side-btn{border:1px solid #2b3449;background:#171f31;color:#dbe2f3;border-radius:9px;padding:10px;font-weight:700}
-.trade-presets button:hover,.trade-side-btn.active{border-color:#ffd438;color:#ffd438}
+.trade-presets button:hover,.trade-side-btn.active,.interval-options button.active,.lock-options button.active{border-color:#ffd438;color:#ffd438}
+.interval-options,.lock-options{grid-template-columns:repeat(3,minmax(0,1fr))}
+.lock-options button{min-height:48px;font-size:12px}
 .trade-estimate{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #2b3449;padding:12px 0;color:#aeb8cc;font-size:14px}
 .trade-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
 .trade-modal-actions button{border:0;border-radius:10px;padding:14px;font-weight:800}
@@ -155,7 +157,19 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
   <div class="trade-modal-head"><div><h2 id="tradeModalTitle">Buying BTC/USDT</h2><div class="small muted">Spot order · simulated practice trading</div></div><button class="trade-close" id="closeTradeModal" aria-label="Close trade dialog">✕</button></div>
   <div class="trade-balance"><div><div class="small muted">AVAILABLE BALANCE</div><b>USDT&nbsp; <span id="modalBalance">10,000.00</span></b></div><div style="font-size:28px;color:#ffd438">▣</div></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px"><button class="trade-side-btn active" id="modalBuy">BUY</button><button class="trade-side-btn" id="modalSell">SELL</button></div>
-  <label class="trade-field" for="modalAmount">Trade amount (USDT)</label><input id="modalAmount" type="number" min="1" step="0.01" value="100" inputmode="decimal">
+  <label class="trade-field" for="tradeMode">Trade mode</label><select id="tradeMode"><option value="spot">Spot trading</option><option value="interval">Interval practice trade</option></select>
+ <div id="intervalControls" class="hidden">
+  <label class="trade-field">1. Select trade interval</label>
+  <div class="trade-presets interval-options" id="intervalOptions">
+   <button type="button" data-interval="30">30s</button><button type="button" data-interval="60" class="active">60s</button><button type="button" data-interval="90">90s</button><button type="button" data-interval="120">120s</button><button type="button" data-interval="180">180s</button><button type="button" data-interval="360">360s</button>
+  </div>
+  <label class="trade-field">2. Select lock level</label>
+  <div class="trade-presets lock-options" id="lockOptions">
+   <button type="button" data-lock="0" class="active">$100–$5K</button><button type="button" data-lock="1">$5K–$10K</button><button type="button" data-lock="2">$10K–$25K</button><button type="button" data-lock="3">$25K–$50K</button><button type="button" data-lock="4">$50K–$100K</button><button type="button" data-lock="5">$100K–$1M</button>
+  </div>
+  <p class="small muted">Practice simulation only. Lock levels are amount bands, not investment plans or guaranteed returns. No real assets are locked.</p>
+ </div>
+ <label class="trade-field" for="modalAmount">Trade amount (USDT)</label><input id="modalAmount" type="number" min="1" step="0.01" value="100" inputmode="decimal">
   <div class="trade-presets"><button data-trade-percent="25">25%</button><button data-trade-percent="50">50%</button><button data-trade-percent="75">75%</button><button data-trade-percent="100">100%</button></div>
   <label class="trade-field" for="modalOrderType">Order type</label><select id="modalOrderType"><option value="market">Market — current public price</option><option value="limit">Limit — practice limit price</option></select>
   <div id="limitPriceWrap" class="hidden"><label class="trade-field" for="modalLimitPrice">Limit price (USDT)</label><input id="modalLimitPrice" type="number" min="0.00000001" step="any"></div>
@@ -885,14 +899,46 @@ $("submitTransfer").onclick=()=>{
 };
 updateDepositAddressStatus();
 function formatQty(n){return Number(n).toLocaleString("en-US",{maximumFractionDigits:8});}
+let selectedInterval=60,selectedLock=0;
+const lockBands=[{min:100,max:5000,label:"$100–$5K"},{min:5000,max:10000,label:"$5K–$10K"},{min:10000,max:25000,label:"$10K–$25K"},{min:25000,max:50000,label:"$25K–$50K"},{min:50000,max:100000,label:"$50K–$100K"},{min:100000,max:1000000,label:"$100K–$1M"}];
+function updateTradeMode(){
+ const interval=$("tradeMode").value==="interval";
+ $("intervalControls").classList.toggle("hidden",!interval);
+ $("modalOrderType").disabled=interval;
+ if(interval){$("modalOrderType").value="market";}
+ updateTradeModal();
+}
+$("tradeMode").addEventListener("change",updateTradeMode);
+document.querySelectorAll("[data-interval]").forEach(b=>b.addEventListener("click",()=>{
+ selectedInterval=Number(b.dataset.interval);
+ document.querySelectorAll("[data-interval]").forEach(x=>x.classList.toggle("active",x===b));
+ updateTradeModal();
+}));
+document.querySelectorAll("[data-lock]").forEach(b=>b.addEventListener("click",()=>{
+ selectedLock=Number(b.dataset.lock);
+ document.querySelectorAll("[data-lock]").forEach(x=>x.classList.toggle("active",x===b));
+ const band=lockBands[selectedLock],amount=Number($("modalAmount").value||0);
+ if(amount<band.min||amount>band.max)$("modalAmount").value=String(Math.min(Math.max(amount,band.min),band.max));
+ updateTradeModal();
+}));
 function updateTradeModal(){
- const marketPrice=Number(prices[symbol]||0),amount=Number($("modalAmount").value||0),isLimit=$("modalOrderType").value==="limit";
+ const marketPrice=Number(prices[symbol]||0),amount=Number($("modalAmount").value||0),isInterval=$("tradeMode").value==="interval",isLimit=$("modalOrderType").value==="limit";
  $("tradeModalTitle").textContent=(tradeSide==="buy"?"Buying ":"Selling ")+symbol+"/USDT";
  $("modalBalance").textContent=money(balance);$("modalMarketPrice").textContent=marketPrice>0?money(marketPrice)+" USDT":"Price unavailable";
  $("limitPriceWrap").classList.toggle("hidden",!isLimit);
  const price=isLimit?Number($("modalLimitPrice").value||0):marketPrice;
  $("modalQuantity").textContent=price>0&&amount>0?formatQty(amount/price)+" "+symbol:"—";$("modalTotal").textContent=amount>0?money(amount)+" USDT":"—";
- $("confirmTrade").textContent=tradeSide==="buy"?"Confirm Buy":"Confirm Sell";$("confirmTrade").className=tradeSide==="buy"?"trade-confirm-buy":"trade-confirm-sell";
+ if(isInterval){
+  const band=lockBands[selectedLock];
+  $("tradeModalTitle").textContent="Interval practice · "+symbol+"/USDT";
+  $("modalQuantity").textContent=selectedInterval+" seconds · "+band.label;
+  $("modalTotal").textContent=amount>0?money(amount)+" USDT practice amount":"—";
+  $("confirmTrade").textContent="Start Practice Trade";
+  $("confirmTrade").className="trade-confirm-buy";
+ }else{
+  $("confirmTrade").textContent=tradeSide==="buy"?"Confirm Buy":"Confirm Sell";
+  $("confirmTrade").className=tradeSide==="buy"?"trade-confirm-buy":"trade-confirm-sell";
+ }
  $("modalBuy").classList.toggle("active",tradeSide==="buy");$("modalSell").classList.toggle("active",tradeSide==="sell");
 }
 function openTradeModal(side){tradeSide=side||$("side").value||"buy";$("modalAmount").value=$("amount").value||"100";$("modalLimitPrice").value=prices[symbol]||"";$("tradeModal").classList.remove("hidden");updateTradeModal();}
@@ -905,8 +951,16 @@ document.querySelectorAll("[data-trade-percent]").forEach(button=>button.addEven
  $("modalAmount").value=(available*fraction).toFixed(2);updateTradeModal();
 }));
 $("confirmTrade").onclick=()=>{
- const amount=Number($("modalAmount").value),marketPrice=Number(prices[symbol]||0),isLimit=$("modalOrderType").value==="limit",price=isLimit?Number($("modalLimitPrice").value):marketPrice;
+ const amount=Number($("modalAmount").value),marketPrice=Number(prices[symbol]||0),isInterval=$("tradeMode").value==="interval",isLimit=$("modalOrderType").value==="limit",price=isLimit?Number($("modalLimitPrice").value):marketPrice;
  if(!Number.isFinite(amount)||amount<=0)return toast("Enter a valid order amount.");
+ if(isInterval){
+  const band=lockBands[selectedLock];
+  if(amount<band.min||amount>band.max)return toast("Amount must fit the selected lock level: "+band.label+".");
+  if(amount>balance)return toast("Insufficient USDT practice balance.");
+  activity.unshift("INTERVAL PRACTICE · "+symbol+"/USDT · "+selectedInterval+"s · "+band.label+" · "+money(amount)+" USDT · simulated only");
+  renderWallet();closeTradeModal();toast("Interval practice trade recorded. No funds were locked and no real trade was placed.");
+  return;
+ }
  if(!Number.isFinite(price)||price<=0)return toast("A valid market or limit price is required.");
  if(isLimit)return toast("Limit orders are displayed, but limit-order matching is not implemented yet.");
  const qty=amount/price;
