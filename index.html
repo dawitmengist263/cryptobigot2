@@ -114,6 +114,8 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
 .market-star.on{color:#ffdb43}
 .market-trade{padding:8px 13px;border:0;border-radius:9px;color:#fff;font-weight:bold;background:linear-gradient(110deg,var(--purple),var(--blue))}
 .market-empty{text-align:center;padding:35px 15px;color:var(--muted)}
+.quick-actions{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.quick-action{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;cursor:pointer;border:1px solid var(--border)}.quick-action>span{font-size:24px;color:#9b7bff}.quick-action small{color:var(--muted);font-size:11px}.wallet-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.wallet-actions button{flex:1;min-width:120px}.wallet-tabs{margin-bottom:18px}.wallet-panel{padding:8px 0}.address-panel{margin:16px 0;padding:16px;border:1px solid var(--border);border-radius:12px;background:#0c0e15}.address-panel code{display:block;overflow-wrap:anywhere;margin:12px 0;color:#f0c96b;font-size:13px}.address-panel button:disabled{opacity:.45;cursor:not-allowed}.wallet-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}.wallet-row:last-child{border-bottom:0}.wallet-row .coin-avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff}.wallet-row .asset-value{margin-left:auto;text-align:right}.wallet-row .asset-value small{display:block;color:var(--muted);margin-top:4px}
+@media(max-width:600px){.quick-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.wallet-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}
 .market-foot{display:flex;justify-content:space-between;gap:10px;padding:13px 15px;border-top:1px solid var(--border);color:var(--muted);font-size:11px}
 @media(max-width:600px){
  header{padding:11px}.brand{font-size:14px}.logo{width:38px;height:38px}
@@ -183,7 +185,7 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
    <button id="chartMode">Candles</button>
   </div>
   <canvas id="chart" class="chart"></canvas>
-  <p class="small muted">Live reference price · Illustrative chart and order book · Demo orders only</p>
+  <p class="small muted" id="chartDataStatus">Live Binance candle history · Practice orders only</p>
  </div>
  <div class="card" id="signalPanel">
   <h3>AI Signal Bot · Technical Analysis <span class="pill" id="signalStatus">CONNECTING</span></h3>
@@ -200,9 +202,15 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
  <div class="card pricebox">
   <div class="muted" id="pricePair">BTC/USDT</div>
   <h2 id="mainPrice">$82,898.35</h2>
-  <span id="change" class="green">+0.42% (demo)</span>
-  <p class="muted">Available demo balance</p>
+  <span id="change" class="green">Connecting to public market data…</span>
+  <p class="muted">Practice balance · no real funds</p>
   <strong id="balance">$10,000.00</strong> USDT
+ </div>
+ <div class="grid quick-actions">
+  <button class="card quick-action" data-page="wallet" data-wallet-tab="deposit"><span>↓</span><b>Deposit</b><small>View deposit instructions</small></button>
+  <button class="card quick-action" data-page="wallet" data-wallet-tab="withdraw"><span>↑</span><b>Withdraw</b><small>Practice withdrawal</small></button>
+  <button class="card quick-action" data-page="wallet" data-wallet-tab="transfer"><span>⇄</span><b>Transfer</b><small>Between demo wallets</small></button>
+  <button class="card quick-action" data-page="trade"><span>⟳</span><b>Convert</b><small>Preview conversion</small></button>
  </div>
 
  <div class="card">
@@ -266,7 +274,8 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
 <section id="tradePage" class="hidden">
  <h2 class="page-title">Convert</h2>
  <div class="card">
-  <h3>Demo Asset Converter</h3>
+  <h3>Convert assets</h3>
+  <p class="small muted">Conversion preview uses public market prices. No real assets are exchanged.</p>
   <label class="muted">From</label>
   <select id="from"><option>USDT</option><option>BTC</option><option>XRP</option></select>
   <label class="muted">Amount</label><input id="convertAmount" type="number" min="0.000001" value="100">
@@ -278,17 +287,50 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
 </section>
 
 <section id="walletPage" class="hidden">
- <h2 class="page-title">Demo Wallet</h2>
- <div class="card pricebox"><p class="muted">Demo balance</p>
-  <h2 id="walletBalance">$10,000.00</h2><span class="pill">PRACTICE ONLY</span>
- </div>
- <div class="card"><h3>Demo Activity</h3><div id="activity" class="muted small">No activity yet.</div>
-  <p class="small muted">Demo-only controls below change your practice balance in this browser session. They do not move money or cryptocurrency.</p>
-  <div class="grid" style="margin-top:16px">
-   <div class="stat"><h3>Demo deposit</h3><label class="muted" for="demoDepositAmount">Amount (USDT)</label><input id="demoDepositAmount" type="number" min="1" max="1000000" value="500"><button class="primary" id="demoDepositBtn">Add demo funds</button><p class="small muted">Practice credit only — no payment is taken.</p></div>
-   <div class="stat"><h3>Demo withdrawal</h3><label class="muted" for="demoWithdrawAmount">Amount (USDT)</label><input id="demoWithdrawAmount" type="number" min="1" value="100"><button class="primary" id="demoWithdrawBtn">Withdraw demo funds</button><p class="small muted">Reduces practice balance only — no wallet transfer occurs.</p></div>
+ <h2 class="page-title">Wallet</h2>
+ <div class="card pricebox wallet-summary"><p class="muted">Estimated portfolio value</p>
+  <h2 id="walletBalance">$10,000.00</h2><span class="pill">PRACTICE ACCOUNT</span>
+  <div class="wallet-actions">
+   <button class="primary" data-wallet-tab="deposit">↓ Deposit</button>
+   <button class="secondary" data-wallet-tab="withdraw">↑ Withdraw</button>
+   <button class="secondary" data-wallet-tab="transfer">⇄ Transfer</button>
+   <button class="secondary" data-page="trade">⟳ Convert</button>
   </div>
  </div>
+ <div class="card">
+  <div class="market-tabs wallet-tabs">
+   <button class="market-tab active" data-wallet-tab="deposit">Deposit</button>
+   <button class="market-tab" data-wallet-tab="withdraw">Withdraw</button>
+   <button class="market-tab" data-wallet-tab="transfer">Transfer</button>
+  </div>
+  <div id="walletDepositPanel" class="wallet-panel">
+   <h3>Deposit crypto</h3>
+   <p class="small muted">Select the coin and network to see its deposit-address status. Never send assets to an address unless it has been verified by your real wallet/custody backend.</p>
+   <div class="grid">
+    <div><label class="muted" for="depositCoin">Coin</label><select id="depositCoin"><option>USDT</option><option>BTC</option><option>ETH</option><option>BNB</option><option>USDC</option><option>XRP</option><option>SOL</option><option>DOGE</option><option>TRX</option><option>ADA</option><option>LTC</option></select></div>
+    <div><label class="muted" for="depositNetwork">Network</label><select id="depositNetwork"><option value="USDT">USDT — choose network</option><option value="TRC20">TRON (TRC20)</option><option value="ERC20">Ethereum (ERC20)</option><option value="BEP20">BNB Smart Chain (BEP20)</option><option value="BTC">Bitcoin</option><option value="SOL">Solana</option><option value="XRP">XRP Ledger</option></select></div>
+   </div>
+   <div class="address-panel"><div class="muted small">Deposit address</div><code id="depositAddress">Not configured</code><p id="depositAddressStatus" class="small muted">No verified deposit address is configured. This static site cannot create real wallet addresses.</p><button class="secondary" id="copyDepositAddress" disabled>Copy address</button></div>
+   <p class="small muted">Real deposit addresses must be generated or configured securely for each supported coin/network using a custody provider or your own backend. No fake address is shown here.</p>
+  </div>
+  <div id="walletWithdrawPanel" class="wallet-panel hidden">
+   <h3>Withdraw crypto</h3><p class="small muted">Practice-only withdrawal form. It does not send a blockchain transaction.</p>
+   <label class="muted" for="withdrawCoin">Coin</label><select id="withdrawCoin"><option>USDT</option><option>BTC</option><option>ETH</option><option>BNB</option><option>USDC</option><option>XRP</option><option>SOL</option><option>TRX</option></select>
+   <label class="muted" for="withdrawNetwork">Network</label><select id="withdrawNetwork"><option>TRC20</option><option>ERC20</option><option>BEP20</option><option>Bitcoin</option><option>Solana</option><option>XRP Ledger</option></select>
+   <label class="muted" for="withdrawAddress">Destination address (placeholder only)</label><input id="withdrawAddress" placeholder="Not sent — practice form only">
+   <label class="muted" for="withdrawAmount">Amount</label><input id="withdrawAmount" type="number" min="0.00000001" step="any" placeholder="0.00">
+   <button class="primary" id="submitWithdraw">Record practice withdrawal</button>
+  </div>
+  <div id="walletTransferPanel" class="wallet-panel hidden">
+   <h3>Internal transfer</h3><p class="small muted">Moves practice USDT between simulated wallet accounts only.</p>
+   <label class="muted" for="transferFrom">From</label><select id="transferFrom"><option>Spot Wallet</option><option>Funding Wallet</option></select>
+   <label class="muted" for="transferTo">To</label><select id="transferTo"><option>Funding Wallet</option><option>Spot Wallet</option></select>
+   <label class="muted" for="transferAmount">Amount (USDT)</label><input id="transferAmount" type="number" min="0.01" step="any" value="10">
+   <button class="primary" id="submitTransfer">Transfer practice funds</button>
+  </div>
+ </div>
+ <div class="card"><h3>Your assets</h3><div id="assetRows"></div></div>
+ <div class="card"><h3>Recent activity</h3><div id="activity" class="muted small">No activity yet.</div></div>
  <button class="secondary" id="walletLogout">Sign Out</button>
 </section>
 
