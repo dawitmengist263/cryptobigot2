@@ -241,11 +241,21 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
     <button class="market-tab" data-market-view="gainers">Gainers</button>
     <button class="market-tab" data-market-view="losers">Losers</button>
    </div>
-   <input id="marketSearch" class="market-search" type="search" placeholder="Search coin or symbol…" aria-label="Search coin or symbol">
+   <input id="marketSearch" class="market-search" type="search" placeholder="Search coin or pair…" aria-label="Search coin or pair">
+  </div>
+  <div class="market-tabs quote-tabs" aria-label="Quote asset filter" style="margin:0 0 12px">
+   <span class="muted small" style="align-self:center;padding:0 4px">Quote:</span>
+   <button class="market-tab quote-tab active" data-market-quote="USDT">USDT</button>
+   <button class="market-tab quote-tab" data-market-quote="USDC">USDC</button>
+   <button class="market-tab quote-tab" data-market-quote="BTC">BTC</button>
+   <button class="market-tab quote-tab" data-market-quote="ETH">ETH</button>
+   <button class="market-tab quote-tab" data-market-quote="BNB">BNB</button>
+   <button class="market-tab quote-tab" data-market-quote="FDUSD">FDUSD</button>
+   <button class="market-tab quote-tab" data-market-quote="ALL">All pairs</button>
   </div>
   <div class="market-feed"><span class="feed-dot"></span><span id="marketFeedStatus">Connecting to live market data…</span><button class="secondary market-refresh" id="marketRefresh">↻ Refresh</button></div>
   <div class="market-table-wrap">
-   <table class="market-table"><thead><tr><th>Pair</th><th>Price (USDT)</th><th>24h change</th><th>24h volume</th><th>Action</th></tr></thead>
+   <table class="market-table"><thead><tr><th>Trading pair</th><th>Last price</th><th>24h change</th><th>24h volume</th><th>Action</th></tr></thead>
    <tbody id="marketRows"><tr><td colspan="5" class="market-empty">Loading live markets…</td></tr></tbody></table>
   </div>
   <div class="market-foot"><span id="marketCount">Loading markets…</span><span>Refreshes every 30 seconds</span></div>
@@ -500,7 +510,7 @@ async function refreshSignals(){
 }
 // Live public market data for all available USDT spot pairs.
 const marketNames={BTC:"Bitcoin",ETH:"Ethereum",USDT:"Tether",BNB:"BNB",XRP:"XRP",USDC:"USD Coin",SOL:"Solana",TRX:"TRON",DOGE:"Dogecoin",ADA:"Cardano",BCH:"Bitcoin Cash",AVAX:"Avalanche",LINK:"Chainlink",TON:"Toncoin",SHIB:"Shiba Inu",DOT:"Polkadot",SUI:"Sui",LTC:"Litecoin",NEAR:"NEAR Protocol",UNI:"Uniswap",APT:"Aptos",ETC:"Ethereum Classic",ATOM:"Cosmos",XLM:"Stellar",FIL:"Filecoin",ICP:"Internet Computer",HBAR:"Hedera",ARB:"Arbitrum",OP:"Optimism",PEPE:"Pepe",WIF:"dogwifhat",AAVE:"Aave",ALGO:"Algorand",VET:"VeChain",FTM:"Fantom",INJ:"Injective",RENDER:"Render",MKR:"Maker",EOS:"EOS",THETA:"Theta Network"};
-let liveMarkets=[],marketView="all",marketTimer=null;
+let liveMarkets=[],marketView="all",marketQuote="USDT",marketTimer=null;
 let marketWatchlist=new Set();
 try{marketWatchlist=new Set(JSON.parse(localStorage.getItem("cb_market_watchlist")||"[]"));}catch(e){}
 function marketMoney(n){
@@ -510,13 +520,14 @@ function marketMoney(n){
 function marketVolume(n){return Number(n||0).toLocaleString("en-US",{notation:"compact",maximumFractionDigits:2});}
 function renderMarkets(){
  const q=($("marketSearch")?.value||"").trim().toLowerCase();
- let list=liveMarkets.filter(m=>m.base.toLowerCase().includes(q)||m.name.toLowerCase().includes(q)||m.symbol.toLowerCase().includes(q));
+ let list=liveMarkets.filter(m=>(marketQuote==="ALL"||m.quote===marketQuote)&&(m.base.toLowerCase().includes(q)||m.name.toLowerCase().includes(q)||m.symbol.toLowerCase().includes(q)));
  if(marketView==="watchlist")list=list.filter(m=>marketWatchlist.has(m.symbol));
- if(marketView==="hot")list=list.filter(m=>m.quote==="USDT").sort((a,b)=>b.volume-a.volume).slice(0,50);
+ if(marketView==="hot")list=list.sort((a,b)=>b.volume-a.volume).slice(0,50);
  if(marketView==="gainers")list=list.filter(m=>m.change>0).sort((a,b)=>b.change-a.change);
  if(marketView==="losers")list=list.filter(m=>m.change<0).sort((a,b)=>a.change-b.change);
  if(marketView==="all")list.sort((a,b)=>b.volume-a.volume);
- $("marketCount").textContent="Showing "+list.length.toLocaleString()+" of "+liveMarkets.length.toLocaleString()+" USDT pairs";
+ const quoteLabel=marketQuote==="ALL"?"all quote assets":marketQuote+" pairs";
+ $("marketCount").textContent="Showing "+list.length.toLocaleString()+" of "+liveMarkets.filter(m=>marketQuote==="ALL"||m.quote===marketQuote).length.toLocaleString()+" "+quoteLabel;
  if(!list.length){$("marketRows").innerHTML='<tr><td colspan="5" class="market-empty">'+(marketView==="watchlist"?"Your watchlist is empty. Tap ☆ beside a coin to save it.":"No markets match your search.")+'</td></tr>';return;}
  $("marketRows").innerHTML=list.map(m=>{
   const fav=marketWatchlist.has(m.symbol),up=m.change>=0;
@@ -570,6 +581,11 @@ document.querySelectorAll("[data-market-view]").forEach(b=>b.onclick=()=>{
  renderMarkets();
 });
 $("marketSearch").addEventListener("input",renderMarkets);
+document.querySelectorAll("[data-market-quote]").forEach(b=>b.onclick=()=>{
+ marketQuote=b.dataset.marketQuote;
+ document.querySelectorAll("[data-market-quote]").forEach(x=>x.classList.toggle("active",x===b));
+ renderMarkets();
+});
 $("marketRefresh").onclick=refreshMarkets;
 function selectMarketPair(pair){
  const market=liveMarkets.find(x=>x.symbol===pair);
