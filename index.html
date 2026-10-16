@@ -30,6 +30,13 @@ header{
 .headbtn{background:var(--panel);border:1px solid var(--border);color:white;padding:10px;border-radius:11px;margin-left:4px}
 .top-nav{display:flex;align-items:center;gap:6px}.top-nav button{border:0;background:transparent;color:#aeb6ca;padding:11px 13px;border-radius:9px;font-weight:700}.top-nav button:hover{background:#1b2133;color:#fff}
 @media(max-width:650px){.top-nav{display:none}}
+.promo-ticker{overflow:hidden;border-bottom:1px solid #252b3c;background:linear-gradient(100deg,#111522,#17162a,#101c25);white-space:nowrap}
+.promo-track{display:inline-flex;align-items:center;gap:34px;min-width:max-content;padding:12px 0;animation:promoScroll 34s linear infinite}
+.promo-ticker:hover .promo-track{animation-play-state:paused}
+.promo-item{display:inline-flex;align-items:center;gap:9px;color:#dbe4ff;font-size:13px;font-weight:700}
+.promo-item strong{color:#f7c948}.promo-dot{color:#25c997}
+@keyframes promoScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.promo-track{animation:none}}
 main{max-width:1050px;margin:auto;padding:20px 14px 105px}
 .card{background:var(--panel);border:1px solid var(--border);border-radius:17px;
  padding:16px;margin-bottom:17px}
@@ -173,7 +180,20 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
   <button class="headbtn" id="logoutBtn" aria-label="Sign out">↪</button>
  </div>
 </header>
-
+<div class="promo-ticker" aria-label="Platform highlights">
+ <div class="promo-track">
+  <span class="promo-item"><strong>MARKET WATCH</strong> Follow live prices and 24h movers <span class="promo-dot">●</span></span>
+  <span class="promo-item"><strong>STABLECOIN GUIDE</strong> Learn how USDT and USDC work <span class="promo-dot">●</span></span>
+  <span class="promo-item"><strong>STAKING EXPLORER</strong> Compare proof-of-stake assets and network risks <span class="promo-dot">●</span></span>
+  <span class="promo-item"><strong>HOT MARKETS</strong> Explore volume leaders, gainers and losers <span class="promo-dot">●</span></span>
+  <span class="promo-item"><strong>RISK FIRST</strong> Crypto prices can fall; no returns are guaranteed <span class="promo-dot">●</span></span>
+  <span class="promo-item"><strong>MARKET WATCH</strong> Follow live prices and 24h movers <span class="promo-dot">●</span></span>
+  <span class="promo-item"><strong>STABLECOIN GUIDE</strong> Learn how USDT and USDC work <span class="promo-dot">●</span></span>
+  <span class="promo-item"><strong>STAKING EXPLORER</strong> Compare proof-of-stake assets and network risks <span class="promo-dot">●</span></span>
+  <span class="promo-item"><strong>HOT MARKETS</strong> Explore volume leaders, gainers and losers <span class="promo-dot">●</span></span>
+  <span class="promo-item"><strong>RISK FIRST</strong> Crypto prices can fall; no returns are guaranteed <span class="promo-dot">●</span></span>
+ </div>
+</div>
 <main>
 <section id="homePage">
  <div class="card">
@@ -225,12 +245,12 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
 
  <div class="grid">
   <div class="card">
-   <h3>Practice Trading</h3>
+   <h3>Spot Trade · USDT</h3>
    <label class="muted">Order</label>
    <select id="side"><option value="buy">Buy</option><option value="sell">Sell</option></select>
    <label class="muted">Amount in USDT</label>
    <input id="amount" type="number" min="1" value="100">
-   <button class="primary" id="placeOrder">Place Demo Order</button>
+   <button class="primary" id="placeOrder">Place Practice Order</button>
    <p class="small muted">Simulated only. No real trades occur.</p>
   </div>
   <div class="card">
@@ -592,7 +612,7 @@ function renderMarkets(){
   const palette=["#7c5cff","#ec4899","#06b6d4","#84cc16","#f97316","#a855f7","#14b8a6","#eab308","#3b82f6","#f43f5e","#10b981","#8b5cf6"];
   let hash=0;for(let i=0;i<m.base.length;i++)hash=(hash*31+m.base.charCodeAt(i))>>>0;
   const coinColor=coinColors[m.base]||palette[hash%palette.length];
-  return '<tr class="market-row-selectable" data-market-row="'+m.symbol+'" tabindex="0" aria-label="Select '+m.base+' / '+m.quote+'"><td><div class="market-coin"><button class="market-star '+(fav?"on":"")+'" data-market-star="'+m.symbol+'" aria-label="Toggle watchlist">'+(fav?"★":"☆")+'</button><div class="market-avatar" style="background:'+coinColor+';color:#fff;box-shadow:0 0 0 2px #111522,0 0 12px '+coinColor+'55">'+mark+'</div><div><div class="market-name">'+m.base+' / '+m.quote+'</div><div class="market-symbol">'+m.name+' · '+m.symbol+'</div></div></div></td><td><strong>'+marketMoney(m.price)+' '+m.quote+'</strong></td><td><span class="market-change '+(up?"up":"down")+'">'+(up?"+":"")+m.change.toFixed(2)+'%</span></td><td>'+marketVolume(m.volume)+' '+m.quote+'</td><td><button class="market-trade" data-market-trade="'+m.symbol+'">Select</button></td></tr>';
+  return '<tr class="market-row-selectable" data-market-row="'+m.symbol+'" tabindex="0" aria-label="Trade '+m.base+' / '+m.quote+'"><td><div class="market-coin"><button class="market-star '+(fav?"on":"")+'" data-market-star="'+m.symbol+'" aria-label="Toggle watchlist">'+(fav?"★":"☆")+'</button><div class="market-avatar" style="background:'+coinColor+';color:#fff;box-shadow:0 0 0 2px #111522,0 0 12px '+coinColor+'55">'+mark+'</div><div><div class="market-name">'+m.base+' / '+m.quote+'</div><div class="market-symbol">'+m.name+' · '+m.symbol+'</div></div></div></td><td><strong>'+marketMoney(m.price)+' '+m.quote+'</strong></td><td><span class="market-change '+(up?"up":"down")+'">'+(up?"+":"")+m.change.toFixed(2)+'%</span></td><td>'+marketVolume(m.volume)+' '+m.quote+'</td><td><button class="market-trade" data-market-trade="'+m.symbol+'">Trade</button></td></tr>';
  }).join("");
 }
 async function refreshMarkets(){
@@ -648,13 +668,18 @@ function selectMarketPair(pair){
  let target=market;
  if(market.quote!=="USDT"){
   target=liveMarkets.find(x=>x.base===market.base&&x.quote==="USDT");
-  if(!target){toast(pair+" is visible, but "+market.base+"/USDT is not available for the practice chart.");return;}
+  if(!target){
+   toast("There is no direct USDT spot market for "+market.base+". Choose a listed USDT pair to open the chart.");
+   return;
+  }
  }
  prices[target.base]=target.price;
  setSymbol(target.base);
  go("home");
  $("pairSelect").value=target.base;
- toast(market.symbol+" selected. Chart uses "+target.base+"/USDT for practice trading; orders remain simulated.");
+ $("pricePair").textContent=target.base+"/USDT";
+ $("chartDataStatus").textContent="Selected from markets · "+target.base+"/USDT · public market feed; practice orders only";
+ toast("Trading screen opened for "+target.base+"/USDT. This interface uses the available USDT spot market; orders are simulated.");
 }
 $("marketRows").addEventListener("click",e=>{
  const star=e.target.closest("[data-market-star]");
