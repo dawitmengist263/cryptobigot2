@@ -201,7 +201,7 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
   <div>CryptoBigot<small>CRYPTO EXCHANGE</small></div>
  </div>
  <nav class="top-nav" aria-label="Main navigation">
-  <button data-page="home">Trade</button><button data-page="markets">Markets</button><button data-page="trade">Convert</button><button data-page="wallet">Wallet</button>
+  <button data-page="home">Trade</button><button data-page="markets">Markets</button><button data-page="trade">Convert</button><button data-page="wallet">Wallet</button><button data-page="referrals">Invite Friends</button>
  </nav>
  <div>
   <button class="headbtn" id="settingsBtn" aria-label="Settings">⚙</button>
@@ -410,10 +410,31 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
   <p class="small muted">Open the admin prototype to review sample users, simulated deposit and withdrawal requests, and local activity records. It is not secure for managing real accounts or money.</p>
   <a class="secondary" href="admin.html" style="display:inline-block;text-decoration:none">Open admin dashboard ↗</a>
  </div>
+ <div class="card"><h3>Invite friends</h3><p class="small muted">Share your referral link. This demo can create and copy an invite link, but referral tracking and rewards require a secure backend.</p><button class="primary" data-page="referrals">Open Invite Friends ↗</button></div>
  <div class="card"><h3>Preferences</h3>
   <p class="small muted">Your market watchlist is also saved in this browser. Profile settings are stored in this browser only.</p>
   <button class="secondary" id="settingsLogout">Sign Out</button>
  </div>
+</section>
+
+<section id="referralsPage" class="hidden">
+ <h2 class="page-title">Invite Friends</h2>
+ <p class="muted">Invite friends to explore CryptoBigot. Share your link and track local demo activity.</p>
+ <div class="card" style="background:linear-gradient(120deg,#171a35,#111522);border-color:#5142a8">
+  <div class="pill">FRIEND INVITATION</div>
+  <h2 style="margin:12px 0 6px">Grow together</h2>
+  <p class="muted">Share your personal invitation link with friends. No purchase is required to share this link.</p>
+  <label class="muted" for="referralCode">Your referral code</label>
+  <div style="display:flex;gap:8px;align-items:center;margin:8px 0 16px"><input id="referralCode" readonly style="flex:1;min-width:0" aria-label="Your referral code"><button class="secondary" id="copyReferralCode">Copy code</button></div>
+  <label class="muted" for="referralLink">Your invite link</label>
+  <div style="display:flex;gap:8px;align-items:center;margin:8px 0 16px"><input id="referralLink" readonly style="flex:1;min-width:0" aria-label="Your invitation link"><button class="primary" id="copyReferralLink">Copy link</button></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="secondary" id="shareWhatsApp">Share on WhatsApp</button><button class="secondary" id="shareEmail">Invite by email</button></div>
+ </div>
+ <div class="grid two">
+  <div class="card"><p class="muted small">INVITATION CLICKS</p><h2 id="referralClicks">—</h2><p class="small muted">Not tracked by this static demo</p></div>
+  <div class="card"><p class="muted small">FRIENDS JOINED</p><h2 id="referralJoins">0</h2><p class="small muted">No server-side referral records connected</p></div>
+ </div>
+ <div class="card"><h3>How referrals work</h3><ol><li>Copy your invite link.</li><li>Send it to a friend.</li><li>When the site has a secure account backend, it can record the referral and show verified referral activity here.</li></ol><p class="small muted">This version does not pay commissions or promise rewards. Referral links alone cannot verify registrations or calculate real rewards.</p></div>
 </section>
 </main>
 
@@ -422,6 +443,7 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
  <button data-page="markets"><span>▥</span>Markets</button>
  <button class="trade" data-page="trade"><span>⇄</span>Convert</button>
  <button data-page="wallet"><span>▣</span>Wallet</button>
+ <button data-page="referrals"><span>♧</span>Invite</button>
  <button data-page="settings"><span>⚙</span>Settings</button>
 </nav>
 </div>
@@ -442,6 +464,28 @@ function toast(s){
  clearTimeout(toast.timer);toast.timer=setTimeout(()=>$("toast").classList.add("hidden"),2800);
 }
 function current(){return prices[symbol];}
+
+const referralStorageKey="cb_referral_code_v1";
+function getReferralCode(){
+ let code=localStorage.getItem(referralStorageKey);
+ if(!code){const profile=JSON.parse(localStorage.getItem(profileStorageKey)||"{}");const base=(profile.username||"friend").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,7)||"FRIEND";code=base+"-"+Math.random().toString(36).slice(2,7).toUpperCase();localStorage.setItem(referralStorageKey,code);}
+ return code;
+}
+function renderReferralInfo(){
+ const code=getReferralCode(),url=new URL(window.location.href);url.searchParams.set("ref",code);
+ $("referralCode").value=code;$("referralLink").value=url.href;
+ $("referralClicks").textContent="Not available";$("referralJoins").textContent="0";
+}
+async function copyReferralText(text){
+ try{await navigator.clipboard.writeText(text);toast("Copied to clipboard.");}
+ catch(e){const input=document.createElement("textarea");input.value=text;input.style.position="fixed";input.style.opacity="0";document.body.appendChild(input);input.select();const ok=document.execCommand("copy");input.remove();toast(ok?"Copied to clipboard.":"Copy failed. Select the text and copy it manually.");}
+}
+$("copyReferralCode").addEventListener("click",()=>copyReferralText(getReferralCode()));
+$("copyReferralLink").addEventListener("click",()=>{renderReferralInfo();copyReferralText($("referralLink").value);});
+$("shareWhatsApp").addEventListener("click",()=>{renderReferralInfo();window.open("https://wa.me/?text="+encodeURIComponent("Join me on CryptoBigot: "+$("referralLink").value)," _blank","noopener");});
+$("shareEmail").addEventListener("click",()=>{renderReferralInfo();window.location.href="mailto:?subject="+encodeURIComponent("You're invited to CryptoBigot")+"&body="+encodeURIComponent("Join me on CryptoBigot: "+$("referralLink").value);});
+const incomingReferral=new URLSearchParams(window.location.search).get("ref");
+if(incomingReferral&&/^[A-Z0-9-]{3,30}$/i.test(incomingReferral)){try{sessionStorage.setItem("cb_incoming_referral",incomingReferral);}catch(e){}}
 
 // Persist editable profile preferences in this browser (demo only; no password is stored here).
 const profileStorageKey="cb_demo_profile_settings";
@@ -497,11 +541,13 @@ $("loginForm").addEventListener("submit",e=>{
 });
 
 function go(page){
- ["home","markets","trade","wallet","settings"].forEach(p=>
-  $(p+"Page").classList.toggle("hidden",p!==page));
- document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===page));
+ ["home","markets","trade","wallet","settings","referrals"].forEach(p=>{
+  const section=$(p+"Page");if(section)section.classList.toggle("hidden",p!==page);
+ });
+ document.querySelectorAll("[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===page));
  if(page==="home")setTimeout(draw,50);
  if(page==="wallet")renderWallet();
+ if(page==="referrals")renderReferralInfo();
  window.scrollTo({top:0,behavior:"smooth"});
 }
 function showWalletTab(tab){
