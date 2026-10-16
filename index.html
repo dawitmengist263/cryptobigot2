@@ -724,20 +724,48 @@ function renderWallet(){
  $("walletBalance").textContent="$"+money(balance);
  $("activity").innerHTML=activity.length?activity.map(x=>"<p>"+x+"</p>").join(""):"No activity yet.";
  const coins=[["USDT","₮","#26a17b",1],["BTC","₿","#f7931a",prices.BTC||0],["ETH","◆","#627eea",prices.ETH||0],["BNB","◆","#f0b90b",prices.BNB||0],["XRP","✕","#343434",prices.XRP||0],["SOL","◎","#9945ff",prices.SOL||0]];
- $("assetRows").innerHTML=coins.map(([coin,mark,color,price])=>{const amount=coin==="USDT"?balance:0;return '<div class="wallet-row"><div class="coin-avatar" style="background:'+color+'">'+mark+'</div><div><b>'+coin+'</b><div class="muted small">'+(coin==="USDT"?"Tether":"Crypto asset")+'</div></div><div class="asset-value"><b>'+amount.toLocaleString("en-US",{minimumFractionDigits:coin==="USDT"?2:4,maximumFractionDigits:coin==="USDT"?2:8})+' '+coin+'</b><small>≈ 
-function demoWalletAction(kind){
- const id=kind==="deposit"?"demoDepositAmount":"demoWithdrawAmount";
- const amount=Number($(id).value);
- if(!Number.isFinite(amount)||amount<=0)return toast("Enter a valid amount greater than zero.");
- if(kind==="deposit"&&amount>1000000)return toast("Demo deposit limit is 1,000,000 USDT per action.");
- if(kind==="withdraw"&&amount>balance)return toast("Insufficient demo balance.");
- balance+=kind==="deposit"?amount:-amount;
- activity.unshift((kind==="deposit"?"DEMO DEPOSIT +":"DEMO WITHDRAWAL −")+money(amount)+" USDT — simulated only");
- render();toast(kind==="deposit"?"Demo funds added. No real money was deposited.":"Demo withdrawal recorded. No crypto was sent.");
+ $("assetRows").innerHTML=coins.map(([coin,mark,color,price])=>{
+  const amount=coin==="USDT"?balance:0;
+  return '<div class="wallet-row"><div class="coin-avatar" style="background:'+color+'">'+mark+'</div><div><b>'+coin+'</b><div class="muted small">'+(coin==="USDT"?"Tether":"Crypto asset")+'</div></div><div class="asset-value"><b>'+amount.toLocaleString("en-US",{minimumFractionDigits:coin==="USDT"?2:4,maximumFractionDigits:coin==="USDT"?2:8})+' '+coin+'</b><small>≈ $'+money(amount*price)+'</small></div></div>';
+ }).join("");
 }
-$("demoDepositBtn").onclick=()=>demoWalletAction("deposit");
-$("demoWithdrawBtn").onclick=()=>demoWalletAction("withdraw");
-
+const coinNetworks={
+ USDT:[["TRC20","TRON (TRC20)"],["ERC20","Ethereum (ERC20)"],["BEP20","BNB Smart Chain (BEP20)"]],
+ BTC:[["BTC","Bitcoin"]],ETH:[["ERC20","Ethereum (ERC20)"],["BEP20","BNB Smart Chain (BEP20)"]],
+ BNB:[["BEP20","BNB Smart Chain (BEP20)"]],USDC:[["ERC20","Ethereum (ERC20)"],["BEP20","BNB Smart Chain (BEP20)"],["SOL","Solana"]],
+ XRP:[["XRP","XRP Ledger"]],SOL:[["SOL","Solana"]],DOGE:[["DOGE","Dogecoin"]],
+ TRX:[["TRC20","TRON (TRC20)"]],ADA:[["ADA","Cardano"]],LTC:[["LTC","Litecoin"]]
+};
+function updateDepositAddressStatus(){
+ const coin=$("depositCoin").value,oldNetwork=$("depositNetwork").value,options=coinNetworks[coin]||[];
+ $("depositNetwork").innerHTML=options.map(o=>'<option value="'+o[0]+'">'+o[1]+'</option>').join("");
+ if(options.some(o=>o[0]===oldNetwork))$("depositNetwork").value=oldNetwork;
+ const network=$("depositNetwork").value||"network";
+ $("depositAddress").textContent="Not configured";
+ $("depositAddressStatus").textContent="No verified "+coin+" deposit address is configured for "+network+". Real addresses require a secure wallet/custody backend.";
+ $("copyDepositAddress").disabled=true;
+}
+$("depositCoin").addEventListener("change",updateDepositAddressStatus);
+$("depositNetwork").addEventListener("change",updateDepositAddressStatus);
+$("copyDepositAddress").onclick=()=>toast("No verified deposit address is configured.");
+$("submitWithdraw").onclick=()=>{
+ const amount=Number($("withdrawAmount").value),coin=$("withdrawCoin").value,address=$("withdrawAddress").value.trim();
+ if(!Number.isFinite(amount)||amount<=0)return toast("Enter a valid amount.");
+ if(!address)return toast("Enter a destination placeholder for this practice request.");
+ if(coin!=="USDT")return toast("Only the USDT practice balance is tracked. No crypto was sent.");
+ if(amount>balance)return toast("Insufficient practice USDT balance.");
+ balance-=amount;activity.unshift("PRACTICE WITHDRAWAL −"+money(amount)+" USDT · "+$("withdrawNetwork").value+" · not sent");
+ render();toast("Practice withdrawal recorded. No blockchain transaction was sent.");
+};
+$("submitTransfer").onclick=()=>{
+ const amount=Number($("transferAmount").value),from=$("transferFrom").value,to=$("transferTo").value;
+ if(!Number.isFinite(amount)||amount<=0)return toast("Enter a valid amount.");
+ if(from===to)return toast("Choose two different wallet accounts.");
+ if(amount>balance)return toast("Insufficient practice balance.");
+ activity.unshift("PRACTICE TRANSFER "+money(amount)+" USDT · "+from+" → "+to+" · simulated only");
+ render();toast("Practice transfer recorded. Separate wallet balances are not implemented yet.");
+};
+updateDepositAddressStatus();
 $("placeOrder").onclick=()=>{
  const amount=Number($("amount").value),side=$("side").value;
  if(!Number.isFinite(amount)||amount<=0)return toast("Enter a valid amount.");
