@@ -363,7 +363,7 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
     <div><label class="muted" for="depositCoin">Coin</label><select id="depositCoin"><option>USDT</option><option>BTC</option><option>ETH</option><option>BNB</option><option>USDC</option><option>XRP</option><option>SOL</option><option>DOGE</option><option>TRX</option><option>ADA</option><option>LTC</option></select></div>
     <div><label class="muted" for="depositNetwork">Network</label><select id="depositNetwork"><option value="USDT">USDT — choose network</option><option value="TRC20">TRON (TRC20)</option><option value="ERC20">Ethereum (ERC20)</option><option value="BEP20">BNB Smart Chain (BEP20)</option><option value="BTC">Bitcoin</option><option value="SOL">Solana</option><option value="XRP">XRP Ledger</option></select></div>
    </div>
-   <div class="address-panel"><div class="muted small">Deposit address</div><code id="depositAddress">Not configured</code><p id="depositAddressStatus" class="small muted">No verified deposit address is configured. This static site cannot create real wallet addresses.</p><button class="secondary" id="copyDepositAddress" disabled>Copy address</button></div>
+   <div class="address-panel"><div class="muted small">Deposit address</div><code id="depositAddress">Not configured</code><div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap"><img id="depositQr" class="hidden" alt="Deposit QR code" width="150" height="150" style="background:#fff;padding:7px;border-radius:10px"><p id="depositAddressStatus" class="small muted">No verified deposit address is configured. This static site cannot create real wallet addresses.</p></div><button class="secondary" id="copyDepositAddress" disabled>Copy address</button></div>
    <p class="small muted">Real deposit addresses must be generated or configured securely for each supported coin/network using a custody provider or your own backend. No fake address is shown here.</p>
   </div>
   <div id="walletWithdrawPanel" class="wallet-panel hidden">
@@ -523,6 +523,7 @@ function setSymbol(s){
  symbol=s;
  liveBook=null;refreshOrderBook();
  $("pricePair").textContent=s+"/USDT";
+ $("tradeModalTitle").textContent=(tradeSide==="sell"?"Selling ":"Buying ")+s+"/USDT";
  $("coinIcon").textContent=({BTC:"₿",ETH:"◆",BNB:"◆",XRP:"✕",SOL:"◎",DOGE:"Ð",ADA:"✺",TRX:"△",LTC:"Ł",BCH:"₿"})[s]||s.slice(0,1);
  $("coinIcon").classList.toggle("xrp",s==="XRP");
  $("pairSelect").value=s;
@@ -662,6 +663,7 @@ async function refreshMarkets(){
    return {symbol:x.symbol,base,quote,name:marketNames[base]||base,price,change:Number(x.priceChangePercent)||0,volume:Number(x.quoteVolume)||0};
   });
   $("marketFeedStatus").textContent="Live market feed · "+new Date().toLocaleTimeString();
+ if(liveMarkets.length){$("marketFeedStatus").title="Click a pair row or Trade button to select the pair and open its trade window.";}
   updatePairSelector();
   if(!prices[symbol]&&prices.BTC)symbol="BTC";
   renderMarkets();
@@ -693,22 +695,20 @@ document.querySelectorAll("[data-market-quote]").forEach(b=>b.onclick=()=>{
 $("marketRefresh").onclick=refreshMarkets;
 function selectMarketPair(pair){
  const market=liveMarkets.find(x=>x.symbol===pair);
- if(!market){toast("This market is no longer available. Refresh the market list and try again.");return;}
+ if(!market){toast("Market data is still loading or this pair is unavailable. Press Refresh and try again.");return;}
  let target=market;
  if(market.quote!=="USDT"){
   target=liveMarkets.find(x=>x.base===market.base&&x.quote==="USDT");
-  if(!target){
-   toast("There is no direct USDT spot market for "+market.base+". Choose a listed USDT pair to open the chart.");
-   return;
-  }
+  if(!target){toast("No direct USDT spot pair exists for "+market.base+". This pair cannot open the USDT practice chart.");return;}
  }
  prices[target.base]=target.price;
+ symbol=target.base;
  setSymbol(target.base);
- go("home");
  $("pairSelect").value=target.base;
  $("pricePair").textContent=target.base+"/USDT";
- $("chartDataStatus").textContent="Selected from markets · "+target.base+"/USDT · public market feed; practice orders only";
- toast("Trading screen opened for "+target.base+"/USDT. This interface uses the available USDT spot market; orders are simulated.");
+ $("chartDataStatus").textContent="Selected market: "+target.base+"/USDT · live public prices where available · simulated orders";
+ go("home");
+ setTimeout(()=>{draw();openTradeModal("buy");},100);
 }
 $("marketRows").addEventListener("click",e=>{
  const star=e.target.closest("[data-market-star]");
@@ -740,7 +740,7 @@ document.querySelectorAll("[data-interval]").forEach(b=>b.onclick=()=>{
  refreshSignals();
 });
 $("chartMode").textContent="Live Line";
-$("chartMode").onclick=()=>toast("This graph displays live Binance candle closing prices.");
+$("chartMode").onclick=()=>{toast("Live public price chart · purple line indicates market price, not a buy/sell guarantee.");};
 
 function draw(){
  const c=$("chart"),r=c.getBoundingClientRect();if(!r.width||!r.height)return;
@@ -751,9 +751,9 @@ function draw(){
  if(candles.length<2)return;
  const lo=Math.min(...candles)*.997,hi=Math.max(...candles)*1.003;
  const Y=v=>20+(hi-v)/(hi-lo)*(h-45),step=w/(candles.length-1);
- ctx.strokeStyle="#20c997";ctx.lineWidth=2;ctx.beginPath();candles.forEach((v,i)=>i?ctx.lineTo(i*step,Y(v)):ctx.moveTo(0,Y(v)));ctx.stroke();ctx.lineWidth=1;
- const last=candles[candles.length-1],py=Y(last);ctx.setLineDash([4,4]);ctx.strokeStyle="#20c997";ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(w,py);ctx.stroke();ctx.setLineDash([]);
- ctx.fillStyle="#20c997";ctx.font="12px Arial";ctx.fillText("LIVE CLOSE · "+money(last),8,h-8);
+ ctx.strokeStyle="#8b7cff";ctx.lineWidth=2;ctx.beginPath();candles.forEach((v,i)=>i?ctx.lineTo(i*step,Y(v)):ctx.moveTo(0,Y(v)));ctx.stroke();ctx.lineWidth=1;
+ const last=candles[candles.length-1],py=Y(last);ctx.setLineDash([4,4]);ctx.strokeStyle="#6e78a8";ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(w,py);ctx.stroke();ctx.setLineDash([]);
+ ctx.fillStyle="#b8a8ff";ctx.font="12px Arial";ctx.fillText("LIVE CLOSE · "+money(last),8,h-8);
  $("chartDataStatus").textContent=liveMarkets.length?"Live Binance candle history · "+symbol+"/USDT · "+chartInterval:"Connecting to Binance candle history…";
 }
 
@@ -796,16 +796,30 @@ const coinNetworks={
 };
 function updateDepositAddressStatus(){
  const coin=$("depositCoin").value,oldNetwork=$("depositNetwork").value,options=coinNetworks[coin]||[];
- $("depositNetwork").innerHTML=options.map(o=>'<option value="'+o[0]+'">'+o[1]+'</option>').join("");
- if(options.some(o=>o[0]===oldNetwork))$("depositNetwork").value=oldNetwork;
+ const configured=loadDepositAddressConfig().filter(x=>x.coin===coin);
+ const merged=[...options];
+ configured.forEach(x=>{if(!merged.some(o=>o[0]===x.networkCode))merged.push([x.networkCode,x.networkName]);});
+ $("depositNetwork").innerHTML=merged.map(o=>'<option value="'+o[0]+'">'+o[1]+'</option>').join("");
+ if(merged.some(o=>o[0]===oldNetwork))$("depositNetwork").value=oldNetwork;
  const network=$("depositNetwork").value||"network";
- $("depositAddress").textContent="Not configured";
- $("depositAddressStatus").textContent="No verified "+coin+" deposit address is configured for "+network+". Real addresses require a secure wallet/custody backend.";
- $("copyDepositAddress").disabled=true;
+ const record=loadDepositAddressConfig().find(x=>x.coin===coin&&x.networkCode===network&&x.address);
+ const qr=$("depositQr"); if(qr)qr.removeAttribute("src");
+ if(record){
+  $("depositAddress").textContent=record.address;
+  $("depositAddressStatus").textContent="Address configured in this browser by the admin. Verify the coin and network carefully before sending. This static website does not monitor deposits.";
+  $("copyDepositAddress").disabled=false;
+  if(qr){qr.src=record.qrUrl||("https://api.qrserver.com/v1/create-qr-code/?size=180x180&data="+encodeURIComponent(record.address));qr.alt="QR code for "+coin+" on "+record.networkName;qr.classList.remove("hidden");}
+ }else{
+  $("depositAddress").textContent="Not configured";
+  $("depositAddressStatus").textContent="No address is configured for "+coin+" on "+network+". Ask the admin to add a verified address. Never send funds to an unverified address.";
+  $("copyDepositAddress").disabled=true;
+  if(qr)qr.classList.add("hidden");
+ }
 }
+function loadDepositAddressConfig(){try{const x=JSON.parse(localStorage.getItem("cb_deposit_addresses_v1")||"[]");return Array.isArray(x)?x:[];}catch(e){return [];}}
 $("depositCoin").addEventListener("change",updateDepositAddressStatus);
 $("depositNetwork").addEventListener("change",updateDepositAddressStatus);
-$("copyDepositAddress").onclick=()=>toast("No verified deposit address is configured.");
+$("copyDepositAddress").onclick=async()=>{const address=$("depositAddress").textContent;if(!address||address==="Not configured")return toast("No address is configured.");try{await navigator.clipboard.writeText(address);toast("Deposit address copied.");}catch(e){toast("Copy is unavailable in this browser. Select and copy the address manually.");}};
 $("submitWithdraw").onclick=()=>{
  const amount=Number($("withdrawAmount").value),coin=$("withdrawCoin").value,address=$("withdrawAddress").value.trim();
  if(!Number.isFinite(amount)||amount<=0)return toast("Enter a valid amount.");
