@@ -246,10 +246,11 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
   </select>
   <div class="tools">
    <button data-interval="1m">1m</button>
+   <button data-interval="5m">5m</button>
+   <button class="active" data-interval="15m">15m</button>
    <button data-interval="30m">30m</button>
    <button data-interval="1h">1h</button>
-   <button class="active" data-interval="15m">15m</button>
-   <button id="chartMode">Candles</button>
+   <button id="chartMode">Line</button>
   </div>
   <canvas id="chart" class="chart"></canvas>
   <p class="small muted" id="chartDataStatus">Live Binance candle history · Practice orders only</p>
@@ -467,7 +468,7 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
 "use strict";
 const $=id=>document.getElementById(id);
 const prices={BTC:82898.35,XRP:1.3798};
-let symbol="BTC",balance=10000,candles=[],tick=0,candleMode=true,chartInterval="15m",signalTimer=null,liveBook=null;
+let symbol="BTC",balance=10000,candles=[],ohlcCandles=[],tick=0,candleMode=true,chartInterval="15m",signalTimer=null,liveBook=null;
 let activity=[],holdings={BTC:0,XRP:0,ETH:0,BNB:0,SOL:0,DOGE:0,USDC:0,TRX:0,ADA:0,LTC:0},tradeSide="buy";
 
 function money(n){
@@ -646,9 +647,10 @@ async function refreshSignals(){
   const response=await fetch(url,{cache:"no-store"});
   if(!response.ok)throw new Error("Market candle request failed ("+response.status+")");
   const rows=await response.json();
+  ohlcCandles=rows.filter(row=>Number(row[1])>0&&Number(row[2])>0&&Number(row[3])>0&&Number(row[4])>0).slice(-60).map(row=>({time:Number(row[0]),open:Number(row[1]),high:Number(row[2]),low:Number(row[3]),close:Number(row[4]),volume:Number(row[5])}));
   const closes=rows.map(row=>Number(row[4])).filter(n=>Number.isFinite(n)&&n>0);
   if(closes.length<22)throw new Error("Not enough recent candles for indicators.");
-  candles=closes.slice(-45);
+  candles=closes.slice(-60);
   const fast=ema(closes,9),slow=ema(closes,21),strength=rsi(closes,14);
   const last=closes[closes.length-1],previous=closes[closes.length-2];
   let label="NEUTRAL",kind="signal-neutral",detail="Indicators are mixed; wait for clearer confirmation.";
@@ -664,7 +666,7 @@ async function refreshSignals(){
   status.textContent="LIVE";
   status.style.color="#20c997";
   prices[symbol]=last;
-  candles=closes.slice(-45);
+  candles=closes.slice(-60);
   $("pricePair").textContent=symbol+"/USDT";
   $("pairSelect").value=symbol;
   if(!$("app").classList.contains("hidden")){render();draw();}
@@ -799,22 +801,33 @@ document.querySelectorAll("[data-interval]").forEach(b=>b.onclick=()=>{
  chartInterval=b.dataset.interval;
  refreshSignals();
 });
-$("chartMode").textContent="Live Line";
-$("chartMode").onclick=()=>{toast("Live public price chart · purple line indicates market price, not a buy/sell guarantee.");};
+$("chartMode").textContent=candleMode?"Line":"Candles";
+$("chartMode").onclick=()=>{candleMode=!candleMode;$("chartMode").textContent=candleMode?"Line":"Candles";draw();};
 
 function draw(){
  const c=$("chart"),r=c.getBoundingClientRect();if(!r.width||!r.height)return;
- const d=window.devicePixelRatio||1;c.width=r.width*d;c.height=r.height*d;
+ const d=window.devicePixelRatio||1;c.width=Math.round(r.width*d);c.height=Math.round(r.height*d);
  const ctx=c.getContext("2d");ctx.setTransform(d,0,0,d,0,0);
  const w=r.width,h=r.height;ctx.fillStyle="#111522";ctx.fillRect(0,0,w,h);
- for(let i=0;i<6;i++){const y=20+i*(h-40)/5;ctx.strokeStyle="#282e40";ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
- if(candles.length<2)return;
- const lo=Math.min(...candles)*.997,hi=Math.max(...candles)*1.003;
- const Y=v=>20+(hi-v)/(hi-lo)*(h-45),step=w/(candles.length-1);
- ctx.strokeStyle="#8b7cff";ctx.lineWidth=2;ctx.beginPath();candles.forEach((v,i)=>i?ctx.lineTo(i*step,Y(v)):ctx.moveTo(0,Y(v)));ctx.stroke();ctx.lineWidth=1;
- const last=candles[candles.length-1],py=Y(last);ctx.setLineDash([4,4]);ctx.strokeStyle="#6e78a8";ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(w,py);ctx.stroke();ctx.setLineDash([]);
- ctx.fillStyle="#b8a8ff";ctx.font="12px Arial";ctx.fillText("LIVE CLOSE · "+money(last),8,h-8);
- $("chartDataStatus").textContent=liveMarkets.length?"Live Binance candle history · "+symbol+"/USDT · "+chartInterval:"Connecting to Binance candle history…";
+ const data=ohlcCandles.slice(-60);
+ if(data.length<2){ctx.fillStyle="#aeb6ca";ctx.font="13px Arial";ctx.fillText("Loading live OHLC candles…",16,28);return;}
+ const left=12,right=74,top=18,bottom=30,volH=Math.max(34,h*.19),plotRight=w-right,plotBottom=h-bottom-volH,plotH=plotBottom-top,plotW=plotRight-left;
+ const hi=Math.max(...data.map(x=>x.high)),lo=Math.min(...data.map(x=>x.low)),pad=(hi-lo)*.06||hi*.002,high=hi+pad,low=Math.max(0,lo-pad),range=high-low||1;
+ const Y=v=>top+(high-v)/range*plotH,step=plotW/data.length,cw=Math.max(2,Math.min(12,step*.62));
+ ctx.font="11px Arial";ctx.textAlign="right";
+ for(let i=0;i<=5;i++){const value=high-(range*i/5),y=top+plotH*i/5;ctx.strokeStyle="#282e40";ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(plotRight,y);ctx.stroke();ctx.fillStyle="#aeb6ca";ctx.fillText(value.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}),w-5,y+4);}
+ ctx.textAlign="left";
+ if(candleMode){
+  data.forEach((x,i)=>{const xx=left+i*step+step/2,up=x.close>=x.open,color=up?"#0ecb81":"#f6465d";ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(xx,Y(x.high));ctx.lineTo(xx,Y(x.low));ctx.stroke();const yo=Y(x.open),yc=Y(x.close),body=Math.max(1,Math.abs(yc-yo));ctx.fillRect(xx-cw/2,Math.min(yo,yc),cw,body);});
+ }else{
+  ctx.strokeStyle="#8b7cff";ctx.lineWidth=2;ctx.beginPath();data.forEach((x,i)=>i?ctx.lineTo(left+i*step+step/2,Y(x.close)):ctx.moveTo(left+i*step+step/2,Y(x.close)));ctx.stroke();ctx.lineWidth=1;
+ }
+ const maxVol=Math.max(...data.map(x=>x.volume),1);
+ data.forEach((x,i)=>{const xx=left+i*step+step/2,bh=(x.volume/maxVol)*(volH-7);ctx.fillStyle=x.close>=x.open?"rgba(14,203,129,.55)":"rgba(246,70,93,.55)";ctx.fillRect(xx-cw/2,plotBottom+volH-bh,cw,bh);});
+ const last=data[data.length-1],py=Y(last.close);ctx.setLineDash([4,4]);ctx.strokeStyle=last.close>=last.open?"#0ecb81":"#f6465d";ctx.beginPath();ctx.moveTo(left,py);ctx.lineTo(plotRight,py);ctx.stroke();ctx.setLineDash([]);
+ ctx.fillStyle=last.close>=last.open?"#0ecb81":"#f6465d";ctx.fillRect(plotRight,py-9,right-2,18);ctx.fillStyle="#fff";ctx.font="bold 11px Arial";ctx.fillText(last.close.toLocaleString("en-US",{maximumFractionDigits:2}),plotRight+4,py+4);
+ ctx.fillStyle="#aeb6ca";ctx.font="11px Arial";ctx.fillText(new Date(data[0].time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),left, h-8);ctx.textAlign="right";ctx.fillText(new Date(last.time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),plotRight,h-8);ctx.textAlign="left";
+ $("chartDataStatus").textContent=liveMarkets.length?"Live Binance "+(candleMode?"candlestick + volume":"line chart")+" · "+symbol+"/USDT · "+chartInterval+" · public market data; practice orders only":"Connecting to Binance candle history…";
 }
 
 function renderBook(){
