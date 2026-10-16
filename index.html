@@ -27,8 +27,9 @@ header{
 .logo{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
  background:linear-gradient(135deg,var(--purple),var(--blue));font-size:22px}
 .brand small{display:block;font-size:9px;letter-spacing:1.5px;color:var(--muted);margin-top:4px}
-.headbtn{background:var(--panel);border:1px solid var(--border);color:white;
- padding:10px;border-radius:11px;margin-left:4px}
+.headbtn{background:var(--panel);border:1px solid var(--border);color:white;padding:10px;border-radius:11px;margin-left:4px}
+.top-nav{display:flex;align-items:center;gap:6px}.top-nav button{border:0;background:transparent;color:#aeb6ca;padding:11px 13px;border-radius:9px;font-weight:700}.top-nav button:hover{background:#1b2133;color:#fff}
+@media(max-width:650px){.top-nav{display:none}}
 main{max-width:1050px;margin:auto;padding:20px 14px 105px}
 .card{background:var(--panel);border:1px solid var(--border);border-radius:17px;
  padding:16px;margin-bottom:17px}
@@ -163,6 +164,9 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
  <div class="brand"><div class="logo">C</div>
   <div>CryptoBigot<small>CRYPTO EXCHANGE</small></div>
  </div>
+ <nav class="top-nav" aria-label="Main navigation">
+  <button data-page="home">Trade</button><button data-page="markets">Markets</button><button data-page="trade">Convert</button><button data-page="wallet">Wallet</button>
+ </nav>
  <div>
   <button class="headbtn" id="settingsBtn" aria-label="Settings">⚙</button>
   <button class="headbtn" id="noticeBtn" aria-label="Notifications">♧</button>
@@ -233,7 +237,7 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
    <h3>Markets</h3>
    <div class="stat">BTC/USDT <strong id="btcPrice">$82,898.35</strong></div>
    <div class="stat">XRP/USDT <strong id="xrpPrice">$1.38</strong></div>
-   <p class="small muted">Prices are randomly simulated.</p>
+   <p class="small muted">Prices and 24-hour changes come from Binance public market data when available.</p>
   </div>
  </div>
 </section>
