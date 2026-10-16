@@ -186,7 +186,7 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
   <p class="small muted">Live reference price · Illustrative chart and order book · Demo orders only</p>
  </div>
  <div class="card" id="signalPanel">
-  <h3>Live Market Signals <span class="pill" id="signalStatus">CONNECTING</span></h3>
+  <h3>AI Signal Bot · Technical Analysis <span class="pill" id="signalStatus">CONNECTING</span></h3>
   <p class="small muted" id="signalSummary">Loading recent market candles to calculate technical indicators…</p>
   <div class="signal-grid">
    <div class="signal-stat"><div class="signal-label">Overall signal</div><div class="signal-value signal-neutral" id="signalOverall">WAIT</div></div>
@@ -194,7 +194,7 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
    <div class="signal-stat"><div class="signal-label">EMA trend (9/21)</div><div class="signal-value" id="signalEma">—</div></div>
    <div class="signal-stat"><div class="signal-label">Last candle</div><div class="signal-value" id="signalCandle">—</div></div>
   </div>
-  <p class="small muted">Signals are calculated from recent public Binance candles using RSI (14) and EMA (9/21). They are informational, can be wrong, and are not financial advice. Orders on this site remain simulated.</p>
+  <p class="small muted">Rule-based signal assistant using recent public Binance candles, RSI (14) and EMA (9/21). This is not a machine-learning AI and cannot predict prices reliably. Signals may be wrong; not financial advice. All orders remain simulated.</p>
  </div>
 
  <div class="card pricebox">
@@ -236,6 +236,7 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
   <div class="market-toolbar">
    <div class="market-tabs">
     <button class="market-tab active" data-market-view="all">All</button>
+    <button class="market-tab" data-market-view="hot">🔥 Hot</button>
     <button class="market-tab" data-market-view="watchlist">☆ Watchlist</button>
     <button class="market-tab" data-market-view="gainers">Gainers</button>
     <button class="market-tab" data-market-view="losers">Losers</button>
@@ -272,7 +273,11 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
   <h2 id="walletBalance">$10,000.00</h2><span class="pill">PRACTICE ONLY</span>
  </div>
  <div class="card"><h3>Demo Activity</h3><div id="activity" class="muted small">No activity yet.</div>
-  <p class="small muted">Deposits and withdrawals are disabled.</p>
+  <p class="small muted">Demo-only controls below change your practice balance in this browser session. They do not move money or cryptocurrency.</p>
+  <div class="grid" style="margin-top:16px">
+   <div class="stat"><h3>Demo deposit</h3><label class="muted" for="demoDepositAmount">Amount (USDT)</label><input id="demoDepositAmount" type="number" min="1" max="1000000" value="500"><button class="primary" id="demoDepositBtn">Add demo funds</button><p class="small muted">Practice credit only — no payment is taken.</p></div>
+   <div class="stat"><h3>Demo withdrawal</h3><label class="muted" for="demoWithdrawAmount">Amount (USDT)</label><input id="demoWithdrawAmount" type="number" min="1" value="100"><button class="primary" id="demoWithdrawBtn">Withdraw demo funds</button><p class="small muted">Reduces practice balance only — no wallet transfer occurs.</p></div>
+  </div>
  </div>
  <button class="secondary" id="walletLogout">Sign Out</button>
 </section>
@@ -507,6 +512,7 @@ function renderMarkets(){
  const q=($("marketSearch")?.value||"").trim().toLowerCase();
  let list=liveMarkets.filter(m=>m.base.toLowerCase().includes(q)||m.name.toLowerCase().includes(q)||m.symbol.toLowerCase().includes(q));
  if(marketView==="watchlist")list=list.filter(m=>marketWatchlist.has(m.symbol));
+ if(marketView==="hot")list=list.filter(m=>m.quote==="USDT").sort((a,b)=>b.volume-a.volume).slice(0,50);
  if(marketView==="gainers")list=list.filter(m=>m.change>0).sort((a,b)=>b.change-a.change);
  if(marketView==="losers")list=list.filter(m=>m.change<0).sort((a,b)=>a.change-b.change);
  if(marketView==="all")list.sort((a,b)=>b.volume-a.volume);
@@ -667,6 +673,18 @@ function renderWallet(){
  $("walletBalance").textContent="$"+money(balance);
  $("activity").innerHTML=activity.length?activity.map(x=>"<p>"+x+"</p>").join(""):"No activity yet.";
 }
+function demoWalletAction(kind){
+ const id=kind==="deposit"?"demoDepositAmount":"demoWithdrawAmount";
+ const amount=Number($(id).value);
+ if(!Number.isFinite(amount)||amount<=0)return toast("Enter a valid amount greater than zero.");
+ if(kind==="deposit"&&amount>1000000)return toast("Demo deposit limit is 1,000,000 USDT per action.");
+ if(kind==="withdraw"&&amount>balance)return toast("Insufficient demo balance.");
+ balance+=kind==="deposit"?amount:-amount;
+ activity.unshift((kind==="deposit"?"DEMO DEPOSIT +":"DEMO WITHDRAWAL −")+money(amount)+" USDT — simulated only");
+ render();toast(kind==="deposit"?"Demo funds added. No real money was deposited.":"Demo withdrawal recorded. No crypto was sent.");
+}
+$("demoDepositBtn").onclick=()=>demoWalletAction("deposit");
+$("demoWithdrawBtn").onclick=()=>demoWalletAction("withdraw");
 
 $("placeOrder").onclick=()=>{
  const amount=Number($("amount").value),side=$("side").value;
