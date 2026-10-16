@@ -442,13 +442,17 @@ $("loginForm").addEventListener("submit",e=>{
 function go(page){
  ["home","markets","trade","wallet","settings"].forEach(p=>
   $(p+"Page").classList.toggle("hidden",p!==page));
- document.querySelectorAll(".nav button").forEach(b=>
-  b.classList.toggle("active",b.dataset.page===page));
+ document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===page));
  if(page==="home")setTimeout(draw,50);
  if(page==="wallet")renderWallet();
  window.scrollTo({top:0,behavior:"smooth"});
 }
-document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>go(b.dataset.page));
+function showWalletTab(tab){
+ ["deposit","withdraw","transfer"].forEach(t=>$("wallet"+t[0].toUpperCase()+t.slice(1)+"Panel").classList.toggle("hidden",t!==tab));
+ document.querySelectorAll(".wallet-tabs [data-wallet-tab]").forEach(b=>b.classList.toggle("active",b.dataset.walletTab===tab));
+}
+document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{go(b.dataset.page);if(b.dataset.walletTab)showWalletTab(b.dataset.walletTab);});
+document.querySelectorAll("[data-wallet-tab]").forEach(b=>b.onclick=()=>showWalletTab(b.dataset.walletTab));
 $("settingsBtn").onclick=()=>go("settings");
 $("noticeBtn").onclick=()=>toast("No demo notifications.");
 ["logoutBtn","walletLogout","settingsLogout"].forEach(id=>$(id).onclick=logout);
@@ -525,6 +529,7 @@ async function refreshSignals(){
   const rows=await response.json();
   const closes=rows.map(row=>Number(row[4])).filter(n=>Number.isFinite(n)&&n>0);
   if(closes.length<22)throw new Error("Not enough recent candles for indicators.");
+  candles=closes.slice(-45);
   const fast=ema(closes,9),slow=ema(closes,21),strength=rsi(closes,14);
   const last=closes[closes.length-1],previous=closes[closes.length-2];
   let label="NEUTRAL",kind="signal-neutral",detail="Indicators are mixed; wait for clearer confirmation.";
@@ -598,7 +603,6 @@ async function refreshMarkets(){
    if(quote==="USDT")prices[base]=price;
    return {symbol:x.symbol,base,quote,name:marketNames[base]||base,price,change:Number(x.priceChangePercent)||0,volume:Number(x.quoteVolume)||0};
   });
-  if(prices[symbol]){if(candles.length)candles[candles.length-1]=prices[symbol];}
   $("marketFeedStatus").textContent="Live market feed · "+new Date().toLocaleTimeString();
   updatePairSelector();
   if(!prices[symbol]&&prices.BTC)symbol="BTC";
@@ -676,36 +680,18 @@ $("chartMode").onclick=()=>{
 };
 
 function draw(){
- const c=$("chart"),r=c.getBoundingClientRect();
- if(!r.width||!r.height)return;
- const d=window.devicePixelRatio||1;
- c.width=r.width*d;c.height=r.height*d;
+ const c=$("chart"),r=c.getBoundingClientRect();if(!r.width||!r.height)return;
+ const d=window.devicePixelRatio||1;c.width=r.width*d;c.height=r.height*d;
  const ctx=c.getContext("2d");ctx.setTransform(d,0,0,d,0,0);
- const w=r.width,h=r.height;
- ctx.fillStyle="#111522";ctx.fillRect(0,0,w,h);
- for(let i=0;i<6;i++){
-  let y=20+i*(h-40)/5;
-  ctx.strokeStyle="#282e40";ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();
- }
+ const w=r.width,h=r.height;ctx.fillStyle="#111522";ctx.fillRect(0,0,w,h);
+ for(let i=0;i<6;i++){const y=20+i*(h-40)/5;ctx.strokeStyle="#282e40";ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
  if(candles.length<2)return;
  const lo=Math.min(...candles)*.997,hi=Math.max(...candles)*1.003;
- const Y=v=>20+(hi-v)/(hi-lo)*(h-45),step=w/candles.length;
- if(candleMode){
-  candles.forEach((v,i)=>{
-   let prev=candles[Math.max(0,i-1)],x=i*step+step/2;
-   let yo=Y(prev),yc=Y(v),up=v>=prev;
-   ctx.strokeStyle=up?"#20c997":"#f34c62";
-   ctx.fillStyle=ctx.strokeStyle;
-   ctx.beginPath();ctx.moveTo(x,Math.min(yo,yc)-5);ctx.lineTo(x,Math.max(yo,yc)+5);ctx.stroke();
-   ctx.fillRect(x-step*.28,Math.min(yo,yc),Math.max(2,step*.55),Math.max(2,Math.abs(yc-yo)));
-  });
- }else{
-  ctx.strokeStyle="#20c997";ctx.lineWidth=2;ctx.beginPath();
-  candles.forEach((v,i)=>i?ctx.lineTo(i*step,Y(v)):ctx.moveTo(0,Y(v)));
-  ctx.stroke();ctx.lineWidth=1;
- }
- ctx.fillStyle="#20c997";ctx.font="12px Arial";
- ctx.fillText("DEMO PRICE: "+money(current()),8,h-8);
+ const Y=v=>20+(hi-v)/(hi-lo)*(h-45),step=w/(candles.length-1);
+ ctx.strokeStyle="#20c997";ctx.lineWidth=2;ctx.beginPath();candles.forEach((v,i)=>i?ctx.lineTo(i*step,Y(v)):ctx.moveTo(0,Y(v)));ctx.stroke();ctx.lineWidth=1;
+ const last=candles[candles.length-1],py=Y(last);ctx.setLineDash([4,4]);ctx.strokeStyle="#20c997";ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(w,py);ctx.stroke();ctx.setLineDash([]);
+ ctx.fillStyle="#20c997";ctx.font="12px Arial";ctx.fillText("LIVE CLOSE · "+money(last),8,h-8);
+ $("chartDataStatus").textContent=liveMarkets.length?"Live Binance candle history · "+symbol+"/USDT · "+chartInterval:"Connecting to Binance candle history…";
 }
 
 function renderBook(){
@@ -720,17 +706,87 @@ function renderBook(){
  }
 }
 function render(){
- $("mainPrice").textContent="$"+money(current());
- $("balance").textContent="$"+money(balance);
- $("walletBalance").textContent="$"+money(balance);
- $("btcPrice").textContent="$"+money(prices.BTC);
- $("xrpPrice").textContent="$"+money(prices.XRP);
+ $("mainPrice").textContent="$"+money(current());$("balance").textContent="$"+money(balance);$("walletBalance").textContent="$"+money(balance);
+ $("btcPrice").textContent="$"+money(prices.BTC);$("xrpPrice").textContent="$"+money(prices.XRP);
+ const active=liveMarkets.find(m=>m.base===symbol&&m.quote==="USDT");
+ if(active){$("change").textContent=(active.change>=0?"+":"")+active.change.toFixed(2)+"% · 24h";$("change").className=active.change>=0?"green":"red";}
  renderBook();renderWallet();
 }
 function renderWallet(){
  $("walletBalance").textContent="$"+money(balance);
  $("activity").innerHTML=activity.length?activity.map(x=>"<p>"+x+"</p>").join(""):"No activity yet.";
+ const coins=[["USDT","₮","#26a17b",1],["BTC","₿","#f7931a",prices.BTC||0],["ETH","◆","#627eea",prices.ETH||0],["BNB","◆","#f0b90b",prices.BNB||0],["XRP","✕","#343434",prices.XRP||0],["SOL","◎","#9945ff",prices.SOL||0]];
+ $("assetRows").innerHTML=coins.map(([coin,mark,color,price])=>{const amount=coin==="USDT"?balance:0;return '<div class="wallet-row"><div class="coin-avatar" style="background:'+color+'">'+mark+'</div><div><b>'+coin+'</b><div class="muted small">'+(coin==="USDT"?"Tether":"Crypto asset")+'</div></div><div class="asset-value"><b>'+amount.toLocaleString("en-US",{minimumFractionDigits:coin==="USDT"?2:4,maximumFractionDigits:coin==="USDT"?2:8})+' '+coin+'</b><small>≈ 
+function demoWalletAction(kind){
+ const id=kind==="deposit"?"demoDepositAmount":"demoWithdrawAmount";
+ const amount=Number($(id).value);
+ if(!Number.isFinite(amount)||amount<=0)return toast("Enter a valid amount greater than zero.");
+ if(kind==="deposit"&&amount>1000000)return toast("Demo deposit limit is 1,000,000 USDT per action.");
+ if(kind==="withdraw"&&amount>balance)return toast("Insufficient demo balance.");
+ balance+=kind==="deposit"?amount:-amount;
+ activity.unshift((kind==="deposit"?"DEMO DEPOSIT +":"DEMO WITHDRAWAL −")+money(amount)+" USDT — simulated only");
+ render();toast(kind==="deposit"?"Demo funds added. No real money was deposited.":"Demo withdrawal recorded. No crypto was sent.");
 }
+$("demoDepositBtn").onclick=()=>demoWalletAction("deposit");
+$("demoWithdrawBtn").onclick=()=>demoWalletAction("withdraw");
+
+$("placeOrder").onclick=()=>{
+ const amount=Number($("amount").value),side=$("side").value;
+ if(!Number.isFinite(amount)||amount<=0)return toast("Enter a valid amount.");
+ if(side==="buy"&&amount>balance)return toast("Insufficient demo balance.");
+ if(side==="buy")balance-=amount;else balance+=amount;
+ activity.unshift(`${side.toUpperCase()} ${symbol}/USDT — ${money(amount)} USDT (simulated)`);
+ render();toast("Demo order completed. No real trade was placed.");
+};
+$("convert").onclick=()=>{
+ const amount=Number($("convertAmount").value),from=$("from").value,to=$("to").value;
+ const p={USDT:1,...prices};
+ if(!Number.isFinite(amount)||amount<=0)return $("convertResult").textContent="Enter a valid amount.";
+ if(from===to)return $("convertResult").textContent="Select two different assets.";
+ $("convertResult").textContent="Estimated demo result: "+(amount*p[from]/p[to]).toFixed(to==="USDT"?2:8)+" "+to+". Nothing was exchanged.";
+};
+window.addEventListener("resize",draw);
+
+setInterval(()=>{
+ tick++;
+ if(!liveMarkets.length){for(const s of ["BTC","XRP"])prices[s]*=1+(Math.random()-.5)*.0008;}
+ if(!$("app").classList.contains("hidden")){render();if(!$("homePage").classList.contains("hidden"))draw();}
+},3000);
+setInterval(()=>{if(!$("app").classList.contains("hidden"))refreshSignals();},60000);
+
+setSymbol("BTC");
+if(sessionStorage.getItem("cb_demo_login")==="yes")login();
+})();
+</script>
+</body>
+</html>
+
++money(amount*price)+'</small></div></div>';}).join("");
+}
+function updateDepositAddressStatus(){
+ const coin=$("depositCoin").value,network=$("depositNetwork").value;
+ $("depositAddress").textContent="Not configured";
+ $("depositAddressStatus").textContent="No verified "+coin+" deposit address is configured for "+network+". Real addresses require secure wallet/custody backend integration.";
+ $("copyDepositAddress").disabled=true;
+}
+$("depositCoin").addEventListener("change",updateDepositAddressStatus);$("depositNetwork").addEventListener("change",updateDepositAddressStatus);
+$("copyDepositAddress").onclick=()=>toast("No verified deposit address is configured.");
+$("submitWithdraw").onclick=()=>{
+ const amount=Number($("withdrawAmount").value),coin=$("withdrawCoin").value,address=$("withdrawAddress").value.trim();
+ if(!Number.isFinite(amount)||amount<=0)return toast("Enter a valid amount.");
+ if(!address)return toast("Enter a destination placeholder for this practice request.");
+ if(coin!=="USDT")return toast("Only USDT practice balance is tracked. No crypto was sent.");
+ if(amount>balance)return toast("Insufficient practice USDT balance.");
+ balance-=amount;activity.unshift("PRACTICE WITHDRAWAL −"+money(amount)+" USDT · "+$("withdrawNetwork").value+" · not sent");render();toast("Practice withdrawal recorded; no blockchain transaction was sent.");
+};
+$("submitTransfer").onclick=()=>{
+ const amount=Number($("transferAmount").value),from=$("transferFrom").value,to=$("transferTo").value;
+ if(!Number.isFinite(amount)||amount<=0)return toast("Enter a valid amount.");
+ if(from===to)return toast("Choose two different wallet accounts.");
+ if(amount>balance)return toast("Insufficient practice balance.");
+ activity.unshift("PRACTICE TRANSFER "+money(amount)+" USDT · "+from+" → "+to+" · simulated only");render();toast("Practice transfer recorded. Separate wallet balances are not implemented yet.");
+};
+updateDepositAddressStatus();
 function demoWalletAction(kind){
  const id=kind==="deposit"?"demoDepositAmount":"demoWithdrawAmount";
  const amount=Number($(id).value);
