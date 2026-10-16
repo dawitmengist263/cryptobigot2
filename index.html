@@ -353,8 +353,12 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
    <p id="profileSaveMessage" class="small muted" aria-live="polite"></p>
   </form>
  </div>
+ <div class="card"><h3>Admin dashboard</h3>
+  <p class="small muted">Open the admin prototype to review sample users, simulated deposit and withdrawal requests, and local activity records. It is not secure for managing real accounts or money.</p>
+  <a class="secondary" href="admin.html" style="display:inline-block;text-decoration:none">Open admin dashboard ↗</a>
+ </div>
  <div class="card"><h3>Preferences</h3>
-  <p class="small muted">Your market watchlist is also saved in this browser. This demo does not yet sync profile settings between devices or store them in a cloud database.</p>
+  <p class="small muted">Your market watchlist is also saved in this browser. Profile settings are stored in this browser only.</p>
   <button class="secondary" id="settingsLogout">Sign Out</button>
  </div>
 </section>
@@ -452,7 +456,7 @@ function showWalletTab(tab){
  document.querySelectorAll(".wallet-tabs [data-wallet-tab]").forEach(b=>b.classList.toggle("active",b.dataset.walletTab===tab));
 }
 document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{go(b.dataset.page);if(b.dataset.walletTab)showWalletTab(b.dataset.walletTab);});
-document.querySelectorAll("[data-wallet-tab]").forEach(b=>b.onclick=()=>showWalletTab(b.dataset.walletTab));
+document.querySelectorAll("[data-wallet-tab]").forEach(b=>b.onclick=()=>{if(b.dataset.page)go(b.dataset.page);showWalletTab(b.dataset.walletTab);});
 $("settingsBtn").onclick=()=>go("settings");
 $("noticeBtn").onclick=()=>toast("No demo notifications.");
 ["logoutBtn","walletLogout","settingsLogout"].forEach(id=>$(id).onclick=logout);
@@ -675,9 +679,8 @@ document.querySelectorAll("[data-interval]").forEach(b=>b.onclick=()=>{
  chartInterval=b.dataset.interval;
  refreshSignals();
 });
-$("chartMode").onclick=()=>{
- candleMode=!candleMode;$("chartMode").textContent=candleMode?"Candles":"Line";draw();
-};
+$("chartMode").textContent="Live Line";
+$("chartMode").onclick=()=>toast("This graph displays live Binance candle closing prices.");
 
 function draw(){
  const c=$("chart"),r=c.getBoundingClientRect();if(!r.width||!r.height)return;
