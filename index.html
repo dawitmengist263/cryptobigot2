@@ -140,6 +140,19 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
 .market-trade{padding:8px 13px;border:0;border-radius:9px;color:#fff;font-weight:bold;background:linear-gradient(110deg,var(--purple),var(--blue))}
 .market-empty{text-align:center;padding:35px 15px;color:var(--muted)}
 .quick-actions{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.quick-action{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;cursor:pointer;border:1px solid var(--border)}.quick-action>span{font-size:24px;color:#9b7bff}.quick-action small{color:var(--muted);font-size:11px}.wallet-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.wallet-actions button{flex:1;min-width:120px}.wallet-tabs{margin-bottom:18px}.wallet-panel{padding:8px 0}.address-panel{margin:16px 0;padding:16px;border:1px solid var(--border);border-radius:12px;background:#0c0e15}.address-panel code{display:block;overflow-wrap:anywhere;margin:12px 0;color:#f0c96b;font-size:13px}.address-panel button:disabled{opacity:.45;cursor:not-allowed}.wallet-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}.wallet-row:last-child{border-bottom:0}.wallet-row .coin-avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff}.wallet-row .asset-value{margin-left:auto;text-align:right}.wallet-row .asset-value small{display:block;color:var(--muted);margin-top:4px}
+.wallet-summary{padding:25px;background:linear-gradient(135deg,#111522 0%,#151528 58%,#101c2b 100%)}
+.wallet-summary .wallet-total{font-size:clamp(32px,5vw,46px);font-weight:800;letter-spacing:-1.2px;margin:12px 0 4px}
+.wallet-summary .wallet-usd{color:var(--muted);margin-bottom:8px}
+.wallet-summary .wallet-caption{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.wallet-actions button{min-height:48px;font-weight:700}
+.wallet-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.wallet-asset-tools{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
+.wallet-asset-tools input{accent-color:var(--blue)}
+.wallet-asset-header{display:grid;grid-template-columns:minmax(140px,1.4fr) minmax(110px,1fr) minmax(100px,1fr);gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--muted)}
+.wallet-row{min-height:66px}
+.wallet-empty{padding:24px 10px;text-align:center;color:var(--muted)}
+.wallet-bottom-note{font-size:11px;line-height:1.6;color:var(--muted);padding:4px 2px 12px}
+@media(max-width:600px){.wallet-summary{padding:20px 15px}.wallet-asset-header{grid-template-columns:minmax(100px,1.2fr) minmax(90px,1fr) minmax(80px,1fr);gap:6px}.wallet-row{gap:7px}.wallet-row .coin-avatar{width:30px;height:30px;flex-shrink:0}.wallet-row .asset-value{font-size:11px}}
 @media(max-width:600px){.quick-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.wallet-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}
 .market-foot{display:flex;justify-content:space-between;gap:10px;padding:13px 15px;border-top:1px solid var(--border);color:var(--muted);font-size:11px}
 @media(max-width:600px){
@@ -356,8 +369,10 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
 
 <section id="walletPage" class="hidden">
  <h2 class="page-title">Wallet</h2>
- <div class="card pricebox wallet-summary"><p class="muted">Estimated portfolio value</p>
-  <h2 id="walletBalance">$10,000.00</h2><span class="pill">PRACTICE ACCOUNT</span>
+ <div class="card pricebox wallet-summary">
+  <div class="wallet-caption"><p class="muted" style="margin:0">ESTIMATED TOTAL BALANCE</p><span class="pill">PRACTICE ACCOUNT</span></div>
+  <div class="wallet-total" id="walletBalance">$10,000.00</div>
+  <div class="wallet-usd">≈ <span id="walletBalanceUsd">$10,000.00</span> USD</div>
   <div class="wallet-actions">
    <button class="primary" data-wallet-tab="deposit">↓ Deposit</button>
    <button class="secondary" data-wallet-tab="withdraw">↑ Withdraw</button>
@@ -397,8 +412,14 @@ input,select{width:100%;padding:13px;background:#191e2d;border:1px solid #343b50
    <button class="primary" id="submitTransfer">Transfer practice funds</button>
   </div>
  </div>
- <div class="card"><h3>Your assets</h3><div id="assetRows"></div></div>
- <div class="card"><h3>Recent activity</h3><div id="activity" class="muted small">No activity yet.</div></div>
+ <div class="card">
+  <div class="wallet-section-heading"><h3 style="margin:0">Your Assets</h3><label class="wallet-asset-tools"><input id="hideSmallBalances" type="checkbox"> Hide small balances</label></div>
+  <div class="wallet-asset-header"><span>Asset</span><span>Balance</span><span style="text-align:right">Value (USD)</span></div>
+  <div id="assetRows"></div>
+  <div class="wallet-bottom-note">Asset values use the prices available to this practice interface. Displayed balances are not proof of funds held in a real wallet.</div>
+ </div>
+ <div class="card"><div class="wallet-section-heading"><h3 style="margin:0">Recent Activity</h3><span class="muted small">Wallet history</span></div><div id="activity" class="muted small">No activity yet.</div></div>
+ <div class="wallet-bottom-note">Security reminder: never share your password, recovery phrase, or private keys. Real deposits and withdrawals require a secured backend and verified wallet infrastructure.</div>
  <button class="secondary" id="walletLogout">Sign Out</button>
 </section>
 
@@ -851,14 +872,164 @@ function render(){
  if(active){$("change").textContent=(active.change>=0?"+":"")+active.change.toFixed(2)+"% · 24h";$("change").className=active.change>=0?"green":"red";}
  renderBook();renderWallet();
 }
+if($("hideSmallBalances"))$("hideSmallBalances").addEventListener("change",renderWallet);
 function renderWallet(){
  $("walletBalance").textContent="$"+money(balance);
+ if($("walletBalanceUsd"))$("walletBalanceUsd").textContent="$"+money(balance);
  $("activity").innerHTML=activity.length?activity.map(x=>"<p>"+x+"</p>").join(""):"No activity yet.";
  const coins=[["USDT","₮","#26a17b",1],["BTC","₿","#f7931a",prices.BTC||0],["ETH","◆","#627eea",prices.ETH||0],["BNB","◆","#f0b90b",prices.BNB||0],["XRP","✕","#343434",prices.XRP||0],["SOL","◎","#9945ff",prices.SOL||0]];
- $("assetRows").innerHTML=coins.map(([coin,mark,color,price])=>{
-  const amount=coin==="USDT"?balance:(holdings[coin]||0);
-  return '<div class="wallet-row"><div class="coin-avatar" style="background:'+color+'">'+mark+'</div><div><b>'+coin+'</b><div class="muted small">'+(coin==="USDT"?"Tether":"Crypto asset")+'</div></div><div class="asset-value"><b>'+amount.toLocaleString("en-US",{minimumFractionDigits:coin==="USDT"?2:4,maximumFractionDigits:coin==="USDT"?2:8})+' '+coin+'</b><small>≈ $'+money(amount*price)+'</small></div></div>';
+ const hideSmall=$("hideSmallBalances")&&$("hideSmallBalances").checked;
+ const rows=coins.map(([coin,mark,color,price])=>{
+  const amount=coin==="USDT"?balance:(holdings[coin]||0), value=amount*price;
+  if(hideSmall&&value<1)return "";
+  return '<div class="wallet-row"><div class="coin-avatar" style="background:'+color+'">'+mark+'</div><div style="min-width:0"><b>'+coin+'</b><div class="muted small">'+(coin==="USDT"?"Tether USD":"Crypto asset · "+coin)+'</div></div><div class="asset-value"><b>'+amount.toLocaleString("en-US",{minimumFractionDigits:coin==="USDT"?2:4,maximumFractionDigits:coin==="USDT"?2:8})+' '+coin+'</b><small>≈ 
+const coinNetworks={
+ USDT:[["TRC20","TRON (TRC20)"],["ERC20","Ethereum (ERC20)"],["BEP20","BNB Smart Chain (BEP20)"]],
+ BTC:[["BTC","Bitcoin"]],ETH:[["ERC20","Ethereum (ERC20)"],["BEP20","BNB Smart Chain (BEP20)"]],
+ BNB:[["BEP20","BNB Smart Chain (BEP20)"]],USDC:[["ERC20","Ethereum (ERC20)"],["BEP20","BNB Smart Chain (BEP20)"],["SOL","Solana"]],
+ XRP:[["XRP","XRP Ledger"]],SOL:[["SOL","Solana"]],DOGE:[["DOGE","Dogecoin"]],
+ TRX:[["TRC20","TRON (TRC20)"]],ADA:[["ADA","Cardano"]],LTC:[["LTC","Litecoin"]]
+};
+function updateDepositAddressStatus(){
+ const coin=$("depositCoin").value,oldNetwork=$("depositNetwork").value,options=coinNetworks[coin]||[];
+ const configured=loadDepositAddressConfig().filter(x=>x.coin===coin);
+ const merged=[...options];
+ configured.forEach(x=>{if(!merged.some(o=>o[0]===x.networkCode))merged.push([x.networkCode,x.networkName]);});
+ $("depositNetwork").innerHTML=merged.map(o=>'<option value="'+o[0]+'">'+o[1]+'</option>').join("");
+ if(merged.some(o=>o[0]===oldNetwork))$("depositNetwork").value=oldNetwork;
+ const network=$("depositNetwork").value||"network";
+ const record=loadDepositAddressConfig().find(x=>x.coin===coin&&x.networkCode===network&&x.address);
+ const qr=$("depositQr"); if(qr)qr.removeAttribute("src");
+ if(record){
+  $("depositAddress").textContent=record.address;
+  $("depositAddressStatus").textContent="Address configured in this browser by the admin. Verify the coin and network carefully before sending. This static website does not monitor deposits.";
+  $("copyDepositAddress").disabled=false;
+  if(qr){qr.src=record.qrUrl||("https://api.qrserver.com/v1/create-qr-code/?size=180x180&data="+encodeURIComponent(record.address));qr.alt="QR code for "+coin+" on "+record.networkName;qr.classList.remove("hidden");}
+ }else{
+  $("depositAddress").textContent="Not configured";
+  $("depositAddressStatus").textContent="No address is configured for "+coin+" on "+network+". Ask the admin to add a verified address. Never send funds to an unverified address.";
+  $("copyDepositAddress").disabled=true;
+  if(qr)qr.classList.add("hidden");
+ }
+}
+function loadDepositAddressConfig(){try{const x=JSON.parse(localStorage.getItem("cb_deposit_addresses_v1")||"[]");return Array.isArray(x)?x:[];}catch(e){return [];}}
+$("depositCoin").addEventListener("change",updateDepositAddressStatus);
+$("depositNetwork").addEventListener("change",updateDepositAddressStatus);
+$("copyDepositAddress").onclick=async()=>{const address=$("depositAddress").textContent;if(!address||address==="Not configured")return toast("No address is configured.");try{await navigator.clipboard.writeText(address);toast("Deposit address copied.");}catch(e){toast("Copy is unavailable in this browser. Select and copy the address manually.");}};
+$("submitWithdraw").onclick=()=>{
+ const amount=Number($("withdrawAmount").value),coin=$("withdrawCoin").value,address=$("withdrawAddress").value.trim();
+ if(!Number.isFinite(amount)||amount<=0)return toast("Enter a valid amount.");
+ if(!address)return toast("Enter a destination placeholder for this practice request.");
+ if(coin!=="USDT")return toast("Only the USDT practice balance is tracked. No crypto was sent.");
+ if(amount>balance)return toast("Insufficient practice USDT balance.");
+ balance-=amount;activity.unshift("PRACTICE WITHDRAWAL −"+money(amount)+" USDT · "+$("withdrawNetwork").value+" · not sent");
+ render();toast("Practice withdrawal recorded. No blockchain transaction was sent.");
+};
+$("submitTransfer").onclick=()=>{
+ const amount=Number($("transferAmount").value),from=$("transferFrom").value,to=$("transferTo").value;
+ if(!Number.isFinite(amount)||amount<=0)return toast("Enter a valid amount.");
+ if(from===to)return toast("Choose two different wallet accounts.");
+ if(amount>balance)return toast("Insufficient practice balance.");
+ activity.unshift("PRACTICE TRANSFER "+money(amount)+" USDT · "+from+" → "+to+" · simulated only");
+ render();toast("Practice transfer recorded. Separate wallet balances are not implemented yet.");
+};
+updateDepositAddressStatus();
+function formatQty(n){return Number(n).toLocaleString("en-US",{maximumFractionDigits:8});}
+let selectedInterval=60,selectedLock=0;
+const lockBands=[{min:100,max:5000,label:"$100–$5K"},{min:5000,max:10000,label:"$5K–$10K"},{min:10000,max:25000,label:"$10K–$25K"},{min:25000,max:50000,label:"$25K–$50K"},{min:50000,max:100000,label:"$50K–$100K"},{min:100000,max:1000000,label:"$100K–$1M"}];
+function updateTradeMode(){
+ const interval=$("tradeMode").value==="interval";
+ $("intervalControls").classList.toggle("hidden",!interval);
+ $("modalOrderType").disabled=interval;
+ if(interval){$("modalOrderType").value="market";}
+ updateTradeModal();
+}
+$("tradeMode").addEventListener("change",updateTradeMode);
+document.querySelectorAll("[data-interval]").forEach(b=>b.addEventListener("click",()=>{
+ selectedInterval=Number(b.dataset.interval);
+ document.querySelectorAll("[data-interval]").forEach(x=>x.classList.toggle("active",x===b));
+ updateTradeModal();
+}));
+document.querySelectorAll("[data-lock]").forEach(b=>b.addEventListener("click",()=>{
+ selectedLock=Number(b.dataset.lock);
+ document.querySelectorAll("[data-lock]").forEach(x=>x.classList.toggle("active",x===b));
+ const band=lockBands[selectedLock],amount=Number($("modalAmount").value||0);
+ if(amount<band.min||amount>band.max)$("modalAmount").value=String(Math.min(Math.max(amount,band.min),band.max));
+ updateTradeModal();
+}));
+function updateTradeModal(){
+ const marketPrice=Number(prices[symbol]||0),amount=Number($("modalAmount").value||0),isInterval=$("tradeMode").value==="interval",isLimit=$("modalOrderType").value==="limit";
+ $("tradeModalTitle").textContent=(tradeSide==="buy"?"Buying ":"Selling ")+symbol+"/USDT";
+ $("modalBalance").textContent=money(balance);$("modalMarketPrice").textContent=marketPrice>0?money(marketPrice)+" USDT":"Price unavailable";
+ $("limitPriceWrap").classList.toggle("hidden",!isLimit);
+ const price=isLimit?Number($("modalLimitPrice").value||0):marketPrice;
+ $("modalQuantity").textContent=price>0&&amount>0?formatQty(amount/price)+" "+symbol:"—";$("modalTotal").textContent=amount>0?money(amount)+" USDT":"—";
+ if(isInterval){
+  const band=lockBands[selectedLock];
+  $("tradeModalTitle").textContent="Interval practice · "+symbol+"/USDT";
+  $("modalQuantity").textContent=selectedInterval+" seconds · "+band.label;
+  $("modalTotal").textContent=amount>0?money(amount)+" USDT practice amount":"—";
+  $("confirmTrade").textContent="Start Practice Trade";
+  $("confirmTrade").className="trade-confirm-buy";
+ }else{
+  $("confirmTrade").textContent=tradeSide==="buy"?"Confirm Buy":"Confirm Sell";
+  $("confirmTrade").className=tradeSide==="buy"?"trade-confirm-buy":"trade-confirm-sell";
+ }
+ $("modalBuy").classList.toggle("active",tradeSide==="buy");$("modalSell").classList.toggle("active",tradeSide==="sell");
+}
+function openTradeModal(side){tradeSide=side||$("side").value||"buy";$("modalAmount").value=$("amount").value||"100";$("modalLimitPrice").value=prices[symbol]||"";$("tradeModal").classList.remove("hidden");updateTradeModal();}
+function closeTradeModal(){$("tradeModal").classList.add("hidden");}
+$("placeOrder").onclick=()=>openTradeModal();$("closeTradeModal").onclick=closeTradeModal;$("cancelTrade").onclick=closeTradeModal;
+$("modalBuy").onclick=()=>{tradeSide="buy";updateTradeModal();};$("modalSell").onclick=()=>{tradeSide="sell";updateTradeModal();};
+$("modalAmount").addEventListener("input",updateTradeModal);$("modalOrderType").addEventListener("change",updateTradeModal);$("modalLimitPrice").addEventListener("input",updateTradeModal);
+document.querySelectorAll("[data-trade-percent]").forEach(button=>button.addEventListener("click",()=>{
+ const fraction=Number(button.dataset.tradePercent)/100,available=tradeSide==="buy"?balance:(holdings[symbol]||0)*(prices[symbol]||0);
+ $("modalAmount").value=(available*fraction).toFixed(2);updateTradeModal();
+}));
+$("confirmTrade").onclick=()=>{
+ const amount=Number($("modalAmount").value),marketPrice=Number(prices[symbol]||0),isInterval=$("tradeMode").value==="interval",isLimit=$("modalOrderType").value==="limit",price=isLimit?Number($("modalLimitPrice").value):marketPrice;
+ if(!Number.isFinite(amount)||amount<=0)return toast("Enter a valid order amount.");
+ if(isInterval){
+  const band=lockBands[selectedLock];
+  if(amount<band.min||amount>band.max)return toast("Amount must fit the selected lock level: "+band.label+".");
+  if(amount>balance)return toast("Insufficient USDT practice balance.");
+  activity.unshift("INTERVAL PRACTICE · "+symbol+"/USDT · "+selectedInterval+"s · "+band.label+" · "+money(amount)+" USDT · simulated only");
+  renderWallet();closeTradeModal();toast("Interval practice trade recorded. No funds were locked and no real trade was placed.");
+  return;
+ }
+ if(!Number.isFinite(price)||price<=0)return toast("A valid market or limit price is required.");
+ if(isLimit)return toast("Limit orders are displayed, but limit-order matching is not implemented yet.");
+ const qty=amount/price;
+ if(tradeSide==="buy"){if(amount>balance)return toast("Insufficient USDT practice balance.");balance-=amount;holdings[symbol]=(holdings[symbol]||0)+qty;}
+ else{if(qty>(holdings[symbol]||0))return toast("Insufficient "+symbol+" practice holdings to sell.");holdings[symbol]-=qty;balance+=amount;}
+ activity.unshift(tradeSide.toUpperCase()+" "+symbol+"/USDT · "+formatQty(qty)+" "+symbol+" · "+money(amount)+" USDT · simulated");
+ $("amount").value=String(amount);$("side").value=tradeSide;closeTradeModal();render();toast("Practice spot order recorded. No real cryptocurrency was traded.");
+};
+$("convert").onclick=()=>{
+ const amount=Number($("convertAmount").value),from=$("from").value,to=$("to").value;
+ const p={USDT:1,...prices};
+ if(!Number.isFinite(amount)||amount<=0)return $("convertResult").textContent="Enter a valid amount.";
+ if(from===to)return $("convertResult").textContent="Select two different assets.";
+ $("convertResult").textContent="Estimated demo result: "+(amount*p[from]/p[to]).toFixed(to==="USDT"?2:8)+" "+to+". Nothing was exchanged.";
+};
+window.addEventListener("resize",draw);
+
+setInterval(()=>{
+ tick++;
+ if(!liveMarkets.length){for(const s of ["BTC","XRP"])prices[s]*=1+(Math.random()-.5)*.0008;}
+ if(!$("app").classList.contains("hidden")){render();if(!$("homePage").classList.contains("hidden"))draw();}
+},3000);
+setInterval(()=>{if(!$("app").classList.contains("hidden"))refreshSignals();},60000);
+
+setSymbol("BTC");
+if(sessionStorage.getItem("cb_demo_login")==="yes")login();
+})();
+</script>
+</body>
+</html>
++money(value)+'</small></div></div>';
  }).join("");
+ $("assetRows").innerHTML=rows||'<div class="wallet-empty">No assets above $1.00 to display.</div>';
 }
 const coinNetworks={
  USDT:[["TRC20","TRON (TRC20)"],["ERC20","Ethereum (ERC20)"],["BEP20","BNB Smart Chain (BEP20)"]],
