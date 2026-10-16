@@ -658,7 +658,7 @@ function signalText(id,textValue,kind){
  el.classList.remove("signal-buy","signal-sell","signal-neutral");
  if(kind)el.classList.add(kind);
 }
-async function refreshSignals(){
+async async function refreshSignals(){
  const status=$("signalStatus"),summary=$("signalSummary");
  if(!status||!summary)return;
  status.textContent="UPDATING";
